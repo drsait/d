@@ -116,6 +116,16 @@
       "historyHead": "66d0ee007ad00d22a5e26185b8268c20f98c1d02",
       "sha": "ca0a70b8642636c2abf7a04fb4537b76f9a940c7",
       "modifiedAt": "2026-10-06T18:15:37.147Z"
+    },
+    "InternetSpeedMeter.exe": {
+      "historyPath": "InternetSpeedMeter.exe",
+      "historyHead": "b4b59765434dcc1d5189fdcc5afccaf970dc4bb4"
+    },
+    "InternetSpeedMeter - Kopya.exe": {
+      "historyPath": "InternetSpeedMeter.exe",
+      "historyHead": "b4b59765434dcc1d5189fdcc5afccaf970dc4bb4",
+      "addedAt": "2026-10-07T08:53:56.360Z",
+      "copiedAt": "2026-10-07T08:53:56.360Z"
     }
   },
   "folders": {
