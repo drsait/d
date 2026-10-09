@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYAP TXT / CSV — Düzeltilmiş v12</title>
+    <style>
+        :root {
+            --primary: #0284c7;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 { margin-top: 0; color: #0f172a; }
+
+        .card {
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        textarea {
+            width: 100%;
+            height: 140px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: monospace;
+            box-sizing: border-box;
+            resize: vertical;
+            font-size: 0.85rem;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #eff6ff;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #bfdbfe;
+            margin-top: 10px;
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        input, select, button {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button:hover { background: #0369a1; }
+
+        .log-box {
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .log-info { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .log-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.88rem;
+        }
+
+        th { background-color: #f1f5f9; color: #334155; font-weight: 600; }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-late { background: #fee2e2; color: #991b1b; }
+        .badge-in-list { background: #e0f2fe; color: #075985; }
+        .badge-upcoming { background: #fef3c7; color: #92400e; }
+        .badge-matched { background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 3px; font-size: 0.75rem; }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+    
+        .tc-copy { background:transparent; color:#0369a1; padding:2px 0; font:inherit; border:0; border-radius:0; text-decoration:underline dotted; }
+        .tc-copy:hover { background:#e0f2fe; }
+        #copyNotice { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#166534; color:white; padding:12px 20px; border-radius:8px; box-shadow:0 3px 12px #0003; z-index:1000; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <p>Dosyalar yalnızca tarayıcınızda işlenir. İnternet gerekmez.</p><h1>HYAP Çift Liste Karşılaştırma — v12</h1>
+
+    <div class="card grid-2">
+        <div>
+            <label for="jsonInput">1. Ana Hasta Verisi (JSON / TXT / CSV):</label>
+            <textarea autocomplete="off" spellcheck="false" id="jsonInput" placeholder="Ana veriyi yapıştırın veya dosya seçin."></textarea><div style="margin-top:10px"><input type="file" accept=".txt,.csv,.json,.tsv" onchange="readFile(this,'jsonInput')"><select id="jsonInputEncoding" aria-label="Dosya kodlaması"><option value="auto">Kodlama: Otomatik</option><option value="utf-8">UTF-8</option><option value="windows-1254">Türkçe Windows-1254</option><option value="utf-16le">UTF-16</option></select><div id="jsonInputFile" role="status"></div></div>
+        </div>
+        <div>
+            <label for="secondListInput">2. Karşılaştırılacak Liste (TXT / CSV / Excel):</label>
+            <textarea autocomplete="off" spellcheck="false" id="secondListInput" placeholder="Karşılaştırma listesini yapıştırın veya dosya seçin."></textarea><div style="margin-top:10px"><input type="file" accept=".txt,.csv,.json,.tsv" onchange="readFile(this,'secondListInput')"><select id="secondListInputEncoding" aria-label="Dosya kodlaması"><option value="auto">Kodlama: Otomatik</option><option value="utf-8">UTF-8</option><option value="windows-1254">Türkçe Windows-1254</option><option value="utf-16le">UTF-16</option></select><div id="secondListInputFile" role="status"></div></div>
+        </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <button onclick="loadData()" style="padding: 12px 24px; font-size: 1rem;">Verileri Yükle ve Analiz Et</button>
+    </div>
+
+    <div id="statusLog" class="log-box"></div>
+
+    <div class="card" id="filterCard" style="display:none;">
+        <h3>Filtreleme ve Ayarlar</h3>
+        
+        <div class="toggle-group">
+            <input type="checkbox" id="strictMatchToggle" checked onchange="applyFilters()" style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="strictMatchToggle" style="cursor: pointer; color: #1e40af; margin:0;">
+                Sadece 2. Listede Eşleşen Kişileri Göster (İşareti kaldırırsanız tüm hastalar listelenir)
+            </label>
+        </div>
+
+        <div class="toggle-group">
+            <input type="checkbox" id="planned30Toggle" checked onchange="applyFilters()" style="width:18px;height:18px">
+            <label for="planned30Toggle">Ana verideki planlanan tarihi en geç 30 gün sonrası olanları göster (geçmiş tarihler dâhil)</label>
+        </div>
+        <p id="planned30Info" style="font-size:0.85rem;color:#475569"></p>
+        <div class="controls">
+            <div class="control-group">
+                <label>Arama (Ad / Soyad / TC)</label>
+                <input autocomplete="off" type="text" id="searchInput" placeholder="Ad, soyad veya TC ile arayın." oninput="applyFilters()">
+            </div>
+            <div class="control-group">
+                <label>Planlanan Tarih (Başlangıç)</label>
+                <input type="date" id="startDate" onchange="applyFilters()">
+            </div>
+            <div class="control-group">
+                <label>Planlanan Tarih (Bitiş)</label>
+                <input type="date" id="endDate" onchange="applyFilters()">
+            </div>
+            <div class="control-group">
+                <label>Hastalık Türü</label>
+                <select id="careTypeFilter" onchange="applyFilters()">
+                    <option value="">Tümü</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Durum</label>
+                <select id="statusFilter" onchange="applyFilters()">
+                    <option value="">Tümü</option>
+                    <option value="late">Gecikmiş</option>
+                    <option value="in-list">Listede</option>
+                    <option value="upcoming">Yaklaşan</option>
+                    <option value="waitlist">Durdurulmuş</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="resultCard" style="display:none;">
+        <button onclick="copyResults()">Sonuçları Kopyala</button><div class="stats">
+            <span id="totalRecordCount">Gösterilen Kayıt: 0</span>
+            <span id="matchedCount" style="color: var(--primary);">Eşleşen Kişi: 0</span>
+        </div>
+        <div style="overflow:auto"><table>
+            <thead>
+                <tr>
+                    <th>TC / Maskeli TC</th>
+                    <th>Adı Soyadı</th>
+                    <th>İşlemler (İlk Planlanan Tarih)</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table></div>
+    </div>
+</div>
+
+<div id="copyNotice" role="status" aria-live="polite" hidden></div>
+<script>
+let rawData=[], flattenedData=[], secondData=[], shown=[];
+const $=id=>document.getElementById(id);
+const clean=s=>String(s??'').toLocaleUpperCase('tr-TR').replace(/[İI]/g,'I').replace(/Ğ/g,'G').replace(/Ü/g,'U').replace(/Ş/g,'S').replace(/Ö/g,'O').replace(/Ç/g,'C').replace(/[^A-Z0-9]/g,'');
+async function readFile(el,target){
+ const file=el.files[0]; if(!file)return;
+ try{const bytes=new Uint8Array(await file.arrayBuffer());let enc=$(target+'Encoding').value,text;
+ if(enc==='auto'){if(bytes[0]===255&&bytes[1]===254)enc='utf-16le';else if(bytes[0]===254&&bytes[1]===255)enc='utf-16be';else {try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes)}catch{enc='windows-1254'}}}
+ if(text===undefined)text=new TextDecoder(enc).decode(bytes);
+ $(target).value=text.replace(/^\uFEFF/,'');$(target+'File').textContent=file.name+' yüklendi. Verileri Yükle ve Analiz Et düğmesine basın.';
+ }catch(e){$(target+'File').textContent='Dosya okunamadı: '+e.message}
+}
+for(const id of ['jsonInput','secondListInput'])$(id+'Encoding').onchange=()=>readFile($(id).parentElement.querySelector('input[type=file]'),id);
+function parseCSV(text,delimiter){
+ let rows=[],row=[],cell='',quoted=false;
+ for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++}else if(quoted||!cell.trim())quoted=!quoted;else cell+=c}
+ else if(c===delimiter&&!quoted){row.push(cell.trim());cell=''}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell.trim());if(row.some(Boolean))rows.push(row);row=[];cell=''}else cell+=c;}
+ if(quoted)throw Error('CSV içinde kapatılmamış çift tırnak var.');row.push(cell.trim());if(row.some(Boolean))rows.push(row);return rows;
+}
+function tableRows(text){text=text.replace(/^\uFEFF/,'').trim();let sep=text.match(/^sep=(.)\r?\n/i);if(sep)return parseCSV(text.slice(sep[0].length),sep[1]);
+ const candidates=['\t',';',','].map(d=>({d,rows:parseCSV(text,d)}));candidates.sort((a,b)=>Math.max(...b.rows.slice(0,5).map(r=>r.length),0)-Math.max(...a.rows.slice(0,5).map(r=>r.length),0));
+ return candidates[0].rows.some(r=>r.length>1)?candidates[0].rows:text.split(/\r?\n/).filter(Boolean).map(l=>l.trim().split(/\s{2,}/));
+}
+const aliases={tc:['TcknHashed','Tc Kimlik No','TC','TCKN','Kimlik No'],name:['GivenName','Adı','Ad','İsim'],surname:['FamilyName','Soyadı','Soyad'],full:['Adı Soyadı','Ad Soyad','fullName'],disease:['CareType','Kronik Hastalık Türü','Hastalık Türü','Hastalık'],type:['State','Takip Tipi','Tip'],status:['Status','Durum'],next:['NextEpisodeOfCareTime','Sonraki Kontrol','Sonraki Kontrol Tarihi'],prev:['PreviousEpisodeOfCareTime','Son Muayene Tar.','Son Muayene Tarihi','Son Kontrol Tarihi'],plan:['Planlanan Tarih İlk','Planlanan Tarih']};
+function fields(obj){const m=new Map(Object.entries(obj).map(([k,v])=>[clean(k),v]));return Object.fromEntries(Object.entries(aliases).map(([key,names])=>[key,names.map(n=>m.get(clean(n))).find(v=>v!==undefined)??'']));}
+function collectPatients(root,main){
+ const result=[];
+ function visit(node,depth){
+  if(depth>60)throw Error('JSON yapısı çok derin.');
+  if(typeof node==='string'){const t=node.trim();if(/^[\[{]/.test(t)){let parsed;try{parsed=JSON.parse(t)}catch{return}visit(parsed,depth+1)}return}
+  if(!node||typeof node!=='object')return;
+  if(Array.isArray(node)){for(const child of node)visit(child,depth+1);return}
+  const f=fields(node);
+  if(f.tc||f.name||f.surname||f.full){
+   const pair=Object.entries(node).find(([k])=>clean(k)==='DISEASESTATES');
+   let diseases=pair?pair[1]:null;
+   if(diseases&&typeof diseases==='object'&&!Array.isArray(diseases))diseases=Object.values(diseases).find(Array.isArray)||[diseases];
+   if(Array.isArray(diseases)&&diseases.length){for(const d of diseases){const df=fields(d||{});result.push({...f,...Object.fromEntries(Object.entries(df).filter(([k,v])=>v!==''))})}}
+   else result.push(f);
+   return;
+  }
+  for(const child of Object.values(node))visit(child,depth+1);
+ }
+ visit(root,0);
+ if(!result.length)throw Error('JSON okundu ancak TC veya ad-soyad alanı taşıyan hasta kaydı bulunamadı. Dosyanın veri yapısını kontrol edin.');
+ return result;
+}
+function readInput(text,main){text=text.replace(/^\uFEFF/,'').trim();if(!text)return [];
+ if(/^[\[{"]/.test(text)){let data;try{data=JSON.parse(text)}catch{data=JSON.parse('['+text+']')};return collectPatients(data,main)}
+ const rows=tableRows(text);let h=rows.findIndex((r,i)=>i<3&&r.some(c=>Object.values(aliases).flat().some(a=>clean(a)===clean(c))));
+ if(h<0){if(main)throw Error('Ana CSV/TXT tablosunda başlık satırı olmalı: Tc Kimlik No, Adı, Soyadı, Hastalık Türü, Sonraki Kontrol Tarihi.');return rows.map(r=>({tc:r[0]||'',disease:r[1]||'',type:r[2]||'',name:r[3]||'',surname:r[4]||'',plan:r[6]||''}))}
+ const headers=rows[h];return rows.slice(h+1).map(r=>fields(Object.fromEntries(headers.map((k,i)=>[k,r[i]||'']))));
+}
+function dateKey(v){const s=String(v||'').trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];m=s.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);return m?`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`:'';}
+function matches(p,s){const a=String(p.tc||'').trim(),b=String(s.tc||'').trim();const pn=clean(p.full||`${p.name} ${p.surname}`),sn=clean(s.full||`${s.name||''} ${s.surname||''}`);if(a&&b){if(a===b&&!a.includes('*'))return true;if(/^\d{11}$/.test(a)&&/^\d{11}$/.test(b))return false;if(a.length===b.length&&/^[\d*]+$/.test(a+b)&&[...a].every((c,i)=>c==='*'||b[i]==='*'||c===b[i]))return !!pn&&pn===sn;return false}return !!pn&&pn===sn;}
+function loadData(){try{rawData=readInput($('jsonInput').value,true);if(!rawData.length)throw Error('Ana veri alanı boş.');secondData=readInput($('secondListInput').value,false);flattenedData=rawData.filter(p=>!excludedRecord(p));
+ $('careTypeFilter').replaceChildren(new Option('Tümü',''));[...new Set(flattenedData.map(x=>String(x.disease||'')))].filter(Boolean).forEach(x=>$('careTypeFilter').add(new Option(turkish(x),x)));
+ $('strictMatchToggle').checked=secondData.length>0;for(const id of ['filterCard','resultCard','statusLog'])$(id).style.display='block';$('statusLog').className='log-box log-info';$('statusLog').textContent=`Ana liste: ${rawData.length} kayıt. İkinci liste: ${secondData.length} satır.`;applyFilters();
+ }catch(e){$('statusLog').style.display='block';$('statusLog').className='log-box log-warning';$('statusLog').textContent='Veri okunamadı: '+e.message;$('resultCard').style.display='none'} }
+function plannedCutoff(now=new Date()){
+ const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+30);
+ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function plannedEligible(value,cutoff){const key=dateKey(value);return !!key&&key<=cutoff;}
+const translations={LATE:'Gecikmiş',OVERDUE:'Gecikmiş',INLIST:'Listede',UPCOMING:'Yaklaşan',COMPLETED:'Tamamlandı',DONE:'Tamamlandı',PENDING:'Bekliyor',ACTIVE:'Aktif',PASSIVE:'Pasif',SCREENING:'Tarama',FOLLOWUP:'İzlem',FOLLOW:'İzlem',MONITORING:'İzlem',DIABETES:'Diyabet',DIABETESMELLITUS:'Diyabet',HYPERTENSION:'Hipertansiyon',OBESITY:'Obezite',CARDIOVASCULAR:'Kardiyovasküler Risk',CARDIOVASCULARRISK:'Kardiyovasküler Risk',CARDIOVASCULARDISEASE:'Kardiyovasküler Hastalık',ELDERLY:'Yaşlı Değerlendirmesi',ELDERLYASSESSMENT:'Yaşlı Değerlendirmesi',GERIATRICASSESSMENT:'Yaşlı Değerlendirmesi',COLORECTALCANCER:'Kolorektal Kanser',BREASTCANCER:'Meme Kanseri',CERVICALCANCER:'Rahim Ağzı Kanseri'};
+Object.assign(translations,{NOTSTARTED:'Başlanmadı',INPROGRESS:'Devam ediyor',CANCELLED:'İptal edildi',CANCELED:'İptal edildi',PLANNED:'Planlandı',SCHEDULED:'Planlandı',WAITING:'Bekliyor',FINISHED:'Tamamlandı',NOTELIGIBLE:'Uygun değil',ELIGIBLE:'Uygun',UNKNOWN:'Bilinmiyor',NONE:'Yok',NOTDONE:'Yapılmadı',ASSESSMENT:'Değerlendirme',EVALUATION:'Değerlendirme',CONTROL:'Kontrol',TREATMENT:'Tedavi',REFERRAL:'Sevk',RISK:'Risk',PRE:'Ön',POST:'Sonrası',INITIAL:'İlk',FIRST:'İlk',REPEAT:'Tekrar',ROUTINE:'Rutin',ANNUAL:'Yıllık',NURSE:'Hemşire',PHYSICIAN:'Hekim',DOCTOR:'Hekim',ADULT:'Yetişkin',CHILD:'Çocuk',CANCER:'Kanser',BREAST:'Meme',CERVICAL:'Rahim Ağzı',COLORECTAL:'Kolorektal',COPD:'KOAH',ASTHMA:'Astım',SMOKING:'Sigara Kullanımı',TOBACCO:'Tütün Kullanımı',NUTRITION:'Beslenme',EXERCISE:'Egzersiz',PHYSICALACTIVITY:'Fiziksel Aktivite'});
+Object.assign(translations,{ELDERLYNURSE:'ASÇ Yaşlı İzlem',WAITLIST:'Durdurulmuş',ISILK:'İlk fırsatta',ISFIRST:'İlk fırsatta',ISINITIAL:'İlk fırsatta',CAD:'KAH'});
+function excludedRecord(p){return [p.disease,p.type,p.status].some(v=>['MONITORINGOMPRE','MONITORINGSPEC'].includes(clean(v)));}
+function turkish(value){
+ const text=String(value||'-').trim();if(translations[clean(text)])return translations[clean(text)];
+ const parts=text.replace(/([a-z])([A-Z])/g,'$1 $2').split(/[-_\s/]+/).filter(Boolean);
+ const translated=parts.map(part=>translations[clean(part)]||(/^[a-z]{1,3}$/.test(part)?part.toUpperCase():part)).join(' ');
+ return translations[clean(translated)]||translated||'-';
+}
+function displayDate(value){const key=dateKey(value);return key?key.split('-').reverse().join('.'):'Tarih yok';}
+function groupedPatients(records){
+ const groups=new Map();
+ for(const p of records){if(excludedRecord(p))continue;const name=p.full||`${p.name||''} ${p.surname||''}`.trim();const tc=String(p.tc||'').trim();const key=tc&&!tc.includes('*')?'tc:'+tc:'name:'+clean(name)+'|'+tc;
+ if(!groups.has(key))groups.set(key,{tc:tc||'-',name,operations:new Map(),matched:false});
+ const group=groups.get(key);const opKey=clean(p.disease)+'|'+clean(p.type);const date=dateKey(p.next||p.plan);const old=group.operations.get(opKey);
+ if(!old||date&&(!dateKey(old.next||old.plan)||date<dateKey(old.next||old.plan)))group.operations.set(opKey,p);
+ }
+ return [...groups.values()];
+}
+function applyFilters(){
+ const search=clean($('searchInput').value),start=$('startDate').value,end=$('endDate').value,care=$('careTypeFilter').value,status=$('statusFilter').value;
+ const plannedOnly=$('planned30Toggle').checked,cutoff=plannedCutoff();shown=[];let matched=0;
+ $('planned30Info').textContent=plannedOnly?'Ana verideki planlanan tarih sınırı: '+displayDate(cutoff)+' (dâhil). Her işlem için en erken planlanan tarih kullanılır.':'Tarih sınırı kapalı. Her işlem için en erken planlanan tarih kullanılır.';
+ for(const group of groupedPatients(flattenedData)){
+  if(search&&!clean(group.name+' '+group.tc).includes(search))continue;
+  const all=[...group.operations.values()];const found=secondData.some(s=>all.some(p=>matches(p,s)));
+  if($('strictMatchToggle').checked&&!found)continue;
+  const ops=all.filter(p=>{const date=dateKey(p.next||p.plan);return (!care||p.disease===care)&&(!status||p.status===status)&&(!(start||end)||(date&&(!start||date>=start)&&(!end||date<=end)))&&(!plannedOnly||plannedEligible(p.next||p.plan,cutoff));});
+  if(!ops.length)continue;
+  ops.sort((a,b)=>(dateKey(a.next||a.plan)||'9999').localeCompare(dateKey(b.next||b.plan)||'9999'));
+  const label=p=>turkish([turkish(p.disease),p.type?turkish(p.type):''].filter(Boolean).join(' '));
+  shown.push([group.tc,group.name,ops.map(p=>label(p)+' ('+displayDate(p.next||p.plan)+', '+turkish(p.status)+')').join('\n')]);
+  if(found)matched++;
+ }
+ const copyEnabled=plannedOnly&&!search&&!start&&!end&&!care&&!status&&$('strictMatchToggle').checked===(secondData.length>0);
+ const frag=document.createDocumentFragment();for(const row of shown){const tr=document.createElement('tr');for(const [index,val] of row.entries()){const td=document.createElement('td');
+ if(index===0&&copyEnabled&&val&&val!=='-'){const button=document.createElement('button');button.type='button';button.className='tc-copy';button.textContent=val;button.title='TC numarasını kopyala';button.setAttribute('aria-label','TC numarasını kopyala');button.onclick=()=>copyTc(val);td.append(button)}else td.textContent=val;
+ td.style.whiteSpace='pre-line';td.style.verticalAlign='top';tr.append(td)}frag.append(tr)}$('tableBody').replaceChildren(frag);$('totalRecordCount').textContent='Gösterilen Kişi: '+shown.length;$('matchedCount').textContent='Eşleşen Kişi: '+matched;
+}
+let copyNoticeTimer;
+async function copyTc(value){
+ let success=false;
+ try{await navigator.clipboard.writeText(String(value));success=true}catch{
+  const active=document.activeElement,t=document.createElement('textarea');t.value=String(value);t.style.position='fixed';t.style.opacity='0';document.body.append(t);t.select();
+  try{success=document.execCommand('copy')}catch{}finally{t.remove();if(active&&active.focus)active.focus()}
+ }
+ const notice=$('copyNotice');notice.textContent=success?'TC kopyalandı':'TC kopyalanamadı';notice.style.background=success?'#166534':'#991b1b';notice.hidden=false;clearTimeout(copyNoticeTimer);copyNoticeTimer=setTimeout(()=>notice.hidden=true,2200);
+}
+async function copyResults(){const text=[['TC / Maskeli TC','Adı Soyadı','İşlemler (İlk Planlanan Tarih)'],...shown].map(r=>r.map(v=>/[\t\r\n"]/.test(String(v))?'"'+String(v).replace(/"/g,'""')+'"':v).join('\t')).join('\n');try{await navigator.clipboard.writeText(text)}catch{const t=document.createElement('textarea');t.value=text;document.body.append(t);t.select();document.execCommand('copy');t.remove()}}
+
+window.addEventListener('pageshow',()=>{
+ rawData=[];flattenedData=[];secondData=[];shown=[];
+ for(const id of ['jsonInput','secondListInput','searchInput'])$(id).value='';
+ for(const input of document.querySelectorAll('input[type="file"]'))input.value='';
+ for(const id of ['jsonInputFile','secondListInputFile','statusLog','planned30Info'])$(id).textContent='';
+ $('tableBody').replaceChildren();
+ for(const id of ['filterCard','resultCard','statusLog'])$(id).style.display='none';
+ $('totalRecordCount').textContent='Gösterilen Kişi: 0';$('matchedCount').textContent='Eşleşen Kişi: 0';
+ $('copyNotice').textContent='';$('copyNotice').hidden=true;
+});
+</script></body></html>
