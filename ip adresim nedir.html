@@ -1,299 +1,73 @@
 <!doctype html>
-<html lang="tr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>İnternet Çıkış IP Geçmişi</title>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>İnternet Çıkış IP ve Cihaz Bilgileri</title>
 <style>
-  *{box-sizing:border-box}
-  body{
-    margin:0;
-    font-family:Segoe UI,Arial,sans-serif;
-    background:#0f172a;
-    color:#e5e7eb;
-    min-height:100vh;
-  }
-  .wrap{max-width:900px;margin:auto;padding:28px 18px}
-  .card{
-    background:#111827;
-    border:1px solid #334155;
-    border-radius:16px;
-    padding:18px;
-    margin-bottom:18px;
-  }
-  h1{margin:0 0 6px;font-size:28px}
-  .sub{color:#94a3b8;margin-bottom:20px}
-  .current{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:14px;
-    flex-wrap:wrap;
-  }
-  .label{font-size:13px;color:#94a3b8}
-  #currentIp{
-    margin-top:5px;
-    font-size:30px;
-    font-weight:800;
-    color:#38bdf8;
-  }
-  #status{font-size:13px;color:#94a3b8;margin-top:5px}
-  .actions{display:flex;gap:9px;flex-wrap:wrap}
-  button{
-    border:0;
-    border-radius:10px;
-    padding:10px 13px;
-    cursor:pointer;
-    font-weight:700;
-    background:#243247;
-    color:#fff;
-  }
-  .primary{background:#0284c7}
-  .danger{background:#7f1d1d}
-  input{
-    width:280px;
-    max-width:100%;
-    padding:10px 12px;
-    border-radius:9px;
-    border:1px solid #334155;
-    background:#0b1220;
-    color:#fff;
-  }
-  .toolbar{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-bottom:12px;
-  }
-  .tablewrap{overflow:auto;border:1px solid #334155;border-radius:10px}
-  table{width:100%;border-collapse:collapse;min-width:600px}
-  th,td{padding:11px 12px;border-bottom:1px solid #273449;text-align:left}
-  th{background:#172033;color:#cbd5e1;font-size:13px}
-  td{font-size:14px}
-  tr:last-child td{border-bottom:0}
-  .empty{text-align:center;color:#94a3b8;padding:25px!important}
-  .badge{
-    display:inline-block;
-    padding:3px 8px;
-    background:#0c4a6e;
-    color:#bae6fd;
-    border-radius:999px;
-    font-size:12px;
-  }
-  .note{margin-top:10px;color:#94a3b8;font-size:12px;line-height:1.5}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <h1>İnternet Çıkış IP Geçmişi</h1>
-  <div class="sub">Yalnızca internete çıkarken dışarıdan görünen genel IP adresini kaydeder.</div>
-
-  <div class="card">
-    <div class="current">
-      <div>
-        <div class="label">Şu anki internet çıkış IP adresi</div>
-        <div id="currentIp">Tespit ediliyor…</div>
-        <div id="status"></div>
-      </div>
-      <div class="actions">
-        <button class="primary" onclick="detectIp()">Yeniden Kontrol Et</button>
-        <button onclick="downloadCsv()">CSV İndir</button>
-        <button class="danger" onclick="clearHistory()">Geçmişi Temizle</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="toolbar">
-      <strong>IP Geçmişi</strong>
-      <input id="search" placeholder="IP veya tarih ara…" oninput="render()">
-    </div>
-
-    <div class="tablewrap">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>İnternet Çıkış IP</th>
-            <th>Tarih</th>
-            <th>Saat</th>
-            <th>Durum</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-
-    <div class="note">
-      Yerel ağ IP adresleri (192.168.x.x, 10.x.x.x vb.) kaydedilmez.
-      Geçmiş yalnızca bu tarayıcının localStorage alanında tutulur.
-    </div>
-  </div>
-</div>
-
-<script>
-const KEY = "internetExitIpHistory_v1";
-
-function getHistory(){
-  try{return JSON.parse(localStorage.getItem(KEY) || "[]")}
-  catch{return []}
-}
-
-function saveHistory(data){
-  localStorage.setItem(KEY, JSON.stringify(data));
-}
-
-function fmtDate(iso){
-  return new Date(iso).toLocaleDateString("tr-TR");
-}
-
-function fmtTime(iso){
-  return new Date(iso).toLocaleTimeString("tr-TR");
-}
-
-async function getPublicIp(){
-  const services = [
-    "https://api.ipify.org?format=json",
-    "https://api4.ipify.org?format=json"
-  ];
-
-  for(const url of services){
-    try{
-      const controller = new AbortController();
-      const timer = setTimeout(()=>controller.abort(), 6000);
-
-      const res = await fetch(url,{
-        cache:"no-store",
-        signal:controller.signal
-      });
-
-      clearTimeout(timer);
-
-      if(!res.ok) continue;
-
-      const data = await res.json();
-
-      if(data.ip) return data.ip;
-    }catch(e){}
-  }
-
-  throw new Error("IP alınamadı");
-}
-
-async function detectIp(){
-  const ipEl = document.getElementById("currentIp");
-  const status = document.getElementById("status");
-
-  ipEl.textContent = "Tespit ediliyor…";
-  status.textContent = "İnternet çıkış IP adresi sorgulanıyor.";
-
-  try{
-    const ip = await getPublicIp();
-    ipEl.textContent = ip;
-
-    const history = getHistory();
-    const previousIp = history.length ? history[0].ip : null;
-    const changed = !!previousIp && previousIp !== ip;
-
-    history.unshift({
-      ip: ip,
-      time: new Date().toISOString(),
-      changed: changed
-    });
-
-    saveHistory(history.slice(0,5000));
-
-    status.textContent = changed
-      ? "İnternet çıkış IP adresi değişti."
-      : "İnternet çıkış IP adresi kaydedildi.";
-
-    render();
-  }catch(e){
-    ipEl.textContent = "Alınamadı";
-    status.textContent = "İnternet çıkış IP adresi tespit edilemedi.";
-  }
-}
-
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g,c=>({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#039;"
-  }[c]));
-}
-
-function render(){
-  const history = getHistory();
-  const q = document.getElementById("search").value.trim().toLowerCase();
-
-  const rows = history.filter(x =>
-    x.ip.toLowerCase().includes(q) ||
-    fmtDate(x.time).toLowerCase().includes(q) ||
-    fmtTime(x.time).toLowerCase().includes(q)
-  );
-
-  const tbody = document.getElementById("tbody");
-
-  if(!rows.length){
-    tbody.innerHTML = '<tr><td colspan="5" class="empty">Kayıt yok.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = rows.map((x,i)=>`
-    <tr>
-      <td>${i+1}</td>
-      <td><strong>${escapeHtml(x.ip)}</strong></td>
-      <td>${fmtDate(x.time)}</td>
-      <td>${fmtTime(x.time)}</td>
-      <td>${x.changed ? '<span class="badge">IP değişti</span>' : 'Normal'}</td>
-    </tr>
-  `).join("");
-}
-
-function downloadCsv(){
-  const history = getHistory();
-
-  if(!history.length){
-    alert("İndirilecek kayıt yok.");
-    return;
-  }
-
-  const rows = [["Internet Cikis IP","Tarih","Saat","IP Degisti"]];
-
-  history.forEach(x=>{
-    rows.push([
-      x.ip,
-      fmtDate(x.time),
-      fmtTime(x.time),
-      x.changed ? "Evet" : "Hayir"
-    ]);
-  });
-
-  const csv = "\uFEFF" + rows.map(r =>
-    r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(";")
-  ).join("\r\n");
-
-  const blob = new Blob([csv],{type:"text/csv;charset=utf-8"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "internet-cikis-ip-gecmisi.csv";
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function clearHistory(){
-  if(confirm("Tüm IP geçmişi silinsin mi?")){
-    localStorage.removeItem(KEY);
-    render();
-  }
-}
-
-render();
-detectIp();
-</script>
-</body>
-</html>
+*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#0f172a;color:#e5e7eb;min-height:100vh}.wrap{max-width:1100px;margin:auto;padding:28px 18px}.card,details{background:#111827;border:1px solid #334155;border-radius:16px;padding:18px;margin-bottom:16px}h1{margin:0 0 8px;font-size:28px}h2{font-size:18px;margin:0}p{line-height:1.6}.sub,.note,.label{color:#94a3b8}.sub{margin-bottom:20px}.note{font-size:12px;line-height:1.6}.current,.toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}.toolbar{margin-bottom:14px}.label,#status{font-size:13px}#currentIp{margin-top:5px;font-size:30px;font-weight:800;color:#38bdf8;overflow-wrap:anywhere}#status{margin-top:6px;color:#94a3b8}.actions{display:flex;gap:9px;flex-wrap:wrap}button{border:1px solid #40516b;border-radius:10px;padding:10px 13px;cursor:pointer;font-weight:600;background:#243247;color:#fff}button:hover{background:#334762}button:disabled{opacity:.5;cursor:wait}.primary{background:#0284c7}.danger{background:#7f1d1d}input{width:280px;max-width:100%;padding:10px 12px;border-radius:9px;border:1px solid #334155;background:#0b1220;color:#fff}.tablewrap{overflow:auto;border:1px solid #334155;border-radius:10px}table{width:100%;border-collapse:collapse}#historyTable{min-width:600px}th,td{padding:11px 12px;border-bottom:1px solid #273449;text-align:left}th{background:#172033;color:#cbd5e1;font-size:13px}td{font-size:14px;overflow-wrap:anywhere}tr:last-child td{border-bottom:0}.empty{text-align:center;color:#94a3b8;padding:25px!important}.badge{display:inline-block;padding:3px 8px;background:#0c4a6e;color:#bae6fd;border-radius:999px;font-size:12px}summary{cursor:pointer;font-weight:700;color:#bae6fd}details table{margin-top:12px;table-layout:fixed}details td:first-child{width:35%;color:#94a3b8}details td{white-space:pre-wrap;vertical-align:top}.permission-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px}.permission-grid>div{padding:12px;border:1px solid #334155;border-radius:12px}.permission-grid p{font-size:12px;color:#94a3b8;margin:8px 0 0}.banner{color:#fcd34d}a{color:#7dd3fc}button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid #38bdf8;outline-offset:3px}@media(max-width:600px){h1{font-size:23px}.wrap{padding:18px 10px}.card,details{padding:14px}details td:first-child{width:40%}}
+</style></head><body><main class="wrap">
+<h1>İnternet Çıkış IP ve Cihaz Bilgileri</h1><div class="sub">Tarayıcının paylaşabildiği bilgiler, tek ekranda.</div>
+<section class="card"><div class="current"><div><div class="label">Şu anki internet çıkış IP adresi</div><div id="currentIp">Tespit ediliyor…</div><div id="status" role="status" aria-live="polite"></div></div><div class="actions"><button id="ipButton" class="primary" onclick="detectIp()">Yeniden Kontrol Et</button><button onclick="downloadCsv()">CSV İndir</button><button class="danger" onclick="clearHistory()">Geçmişi Temizle</button></div></div></section>
+<section class="card"><div class="toolbar"><h2>IP Geçmişi</h2><input id="search" aria-label="IP veya tarih ara" placeholder="IP veya tarih ara…" oninput="render()"></div><div class="tablewrap"><table id="historyTable"><thead><tr><th>#</th><th>İnternet Çıkış IP</th><th>Tarih</th><th>Saat</th><th>Durum</th></tr></thead><tbody id="tbody"></tbody></table></div><div class="note">Her kontrol kaydedilir; son 5000 kayıt saklanır. Yerel IP adresleri kaydedilmez. Geçmiş bu tarayıcıda, bu sayfanın adresine bağlı localStorage alanında tutulur. Önceki geçmiş için aynı site adresi kullanılmalıdır.</div></section>
+<section class="card"><div class="toolbar"><h2>Cihaz ve tarayıcı bilgileri</h2><div class="actions"><button id="refreshButton" onclick="collectInfo()">Bilgileri Yenile</button><button onclick="downloadReport()">Bilgileri JSON İndir</button></div></div><p class="note">Cihaz bilgileri yalnızca bu sayfanın belleğinde tutulur; otomatik olarak kaydedilmez veya bir sunucuya gönderilmez. IP sorgusu için ipify.org ile bağlantı kurulur; servis genel IP adresinizi görür. JSON raporu izinle alınan konumu ve cihaz bilgilerini de içerir.</p><p class="note">Tarayıcı bazı değerleri gizleyebilir, yuvarlayabilir veya değiştirebilir. İşlemci modeli, kesin RAM kapasitesi, bilgisayar adı, MAC adresi, donanım seri numarası, kurulu programlar, parolalar ve diğer sitelerdeki geçmiş normal bir web sayfasından alınamaz.</p><div id="contextNotice" class="note banner"></div><div id="infoStatus" class="note" role="status"></div></section>
+<div id="information"></div>
+<section class="card"><h2>İzinle alınabilecek ek bilgiler</h2><p class="note">Her düğme yalnızca ilgili sorguyu başlatır. Tarayıcı destekliyorsa izin ister; reddedilen izinler atlatılmaz. Daha önce verilen izinlerde tekrar pencere açılmayabilir. İzinleri adres çubuğundaki site ayarlarından geri alabilirsiniz.</p>
+<div class="permission-grid">
+<div><button data-feature="geo" onclick="requestExtra('geo',this)">Konumu Sorgula</button><p>Enlem, boylam, doğruluk ve varsa yükseklik/hız.</p></div>
+<div><button data-feature="camera" onclick="requestExtra('camera',this)">Kamera Bilgileri</button><p>Kamera kısa süre etkinleşir, bilgiler okununca kapatılır. Görüntü kaydı yapılmaz.</p></div>
+<div><button data-feature="microphone" onclick="requestExtra('microphone',this)">Mikrofon Bilgileri</button><p>Mikrofon kısa süre etkinleşir, bilgiler okununca kapatılır. Ses kaydı yapılmaz.</p></div>
+<div><button data-feature="screens" onclick="requestExtra('screens',this)">Tüm Ekranlar</button><p>Bağlı ekranların adı, boyutu ve konumu. Ekran görüntüsü alınmaz.</p></div>
+<div><button data-feature="fonts" onclick="requestExtra('fonts',this)">Yüklü Yazı Tipleri</button><p>Tarayıcının izin verdiği yerel font adları.</p></div>
+<div><button data-feature="usb" onclick="requestExtra('usb',this)">USB Cihazı Seç</button><p>Yalnızca seçtiğiniz cihazın tanımlama bilgileri; bağlantı açılmaz.</p></div>
+<div><button data-feature="hid" onclick="requestExtra('hid',this)">HID Cihazı Seç</button><p>Desteklenen oyun kolu gibi bir aygıtı seçin; cihazdan veri okunmaz.</p></div>
+<div><button data-feature="bluetooth" onclick="requestExtra('bluetooth',this)">Bluetooth Cihazı Seç</button><p>Seçilen cihazın tarayıcıya özel kimliği ve adı; bağlantı kurulmaz.</p></div>
+</div><div id="extraStatus" role="status" aria-live="polite" class="note"></div></section>
+<div id="extras"></div><p class="note">Teknik referanslar: <a href="https://developer.mozilla.org/en-US/docs/Web/API" target="_blank" rel="noopener noreferrer">MDN Web API belgeleri</a>. Desteklenmeyen veya engellenen alanlar açıkça belirtilir; eksik değerler tahmin edilmez.</p>
+</main><script>
+'use strict';
+const KEY='internetExitIpHistory_v1', $=id=>document.getElementById(id), NA='Sunulmuyor / desteklenmiyor';
+const info={}, extra={};let volatileHistory=[],storageWarning='',busy=false,historyRevision=0,memoryOnly=false;
+const textValue=v=>v===undefined||v===null||v===''?NA:typeof v==='boolean'?(v?'Evet':'Hayır'):typeof v==='object'?JSON.stringify(v,null,2):String(v);
+const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+function validIp(ip){if(typeof ip!=='string')return false;const p=ip.split('.');if(p.length!==4||!p.every(x=>/^\d{1,3}$/.test(x)&&+x<=255))return false;const [a,b]=p.map(Number);return !(a===0||a===10||a===127||a>=224||(a===169&&b===254)||(a===172&&b>=16&&b<=31)||(a===192&&b===168)||(a===100&&b>=64&&b<=127));}
+function getHistory(){if(memoryOnly)return volatileHistory.slice();try{const raw=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(raw))throw Error();volatileHistory=raw.filter(x=>x&&validIp(x.ip)&&typeof x.time==='string'&&Number.isFinite(Date.parse(x.time))).map(x=>({ip:x.ip,time:x.time,changed:x.changed===true})).slice(0,5000);}catch{storageWarning='Kalıcı geçmiş okunamıyor; bu oturumun kayıtları gösteriliyor.';}return volatileHistory.slice();}
+function saveHistory(data){volatileHistory=data;try{localStorage.setItem(KEY,JSON.stringify(data));storageWarning='';}catch{memoryOnly=true;storageWarning='Tarayıcı depolamasına yazılamadı; kayıt yalnızca bu oturumda tutuluyor.';}}
+function fmtDate(iso){return new Date(iso).toLocaleDateString('tr-TR');}function fmtTime(iso){return new Date(iso).toLocaleTimeString('tr-TR');}
+async function getPublicIp(){for(const url of ['https://api.ipify.org?format=json','https://api4.ipify.org?format=json']){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);try{const res=await fetch(url,{cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal});if(!res.ok)continue;const data=await res.json();if(validIp(data.ip))return data.ip;}catch{}finally{clearTimeout(timer);}}throw Error('IP alınamadı');}
+async function detectIp(){if(busy)return;busy=true;$('ipButton').disabled=true;const revision=historyRevision;$('currentIp').textContent='Tespit ediliyor…';$('status').textContent='İnternet çıkış IPv4 adresi sorgulanıyor.';try{const ip=await getPublicIp();$('currentIp').textContent=ip;if(revision!==historyRevision){$('status').textContent='Geçmiş temizlendi; devam eden sorgu kaydedilmedi.';return;}const history=getHistory(),changed=!!history.length&&history[0].ip!==ip;history.unshift({ip,time:new Date().toISOString(),changed});saveHistory(history.slice(0,5000));$('status').textContent=(changed?'İnternet çıkış IP adresi değişti.':'İnternet çıkış IP adresi kaydedildi.')+' '+storageWarning;render();}catch{$('currentIp').textContent='Alınamadı';$('status').textContent='IP tespit edilemedi. Bağlantı, servis veya tarayıcı engeli olabilir.';}finally{busy=false;$('ipButton').disabled=false;}}
+function render(){const q=$('search').value.trim().toLowerCase(),rows=getHistory().filter(x=>[x.ip,fmtDate(x.time),fmtTime(x.time)].some(v=>v.toLowerCase().includes(q)));$('tbody').innerHTML=rows.length?rows.map((x,i)=>`<tr><td>${i+1}</td><td><strong>${escapeHtml(x.ip)}</strong></td><td>${fmtDate(x.time)}</td><td>${fmtTime(x.time)}</td><td>${x.changed?'<span class="badge">IP değişti</span>':'Normal'}</td></tr>`).join(''):'<tr><td colspan="5" class="empty">Kayıt yok.</td></tr>';}
+function download(content,type,name){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
+function downloadCsv(){const history=getHistory();if(!history.length)return alert('İndirilecek kayıt yok.');const rows=[['Internet Cikis IP','Tarih','Saat','IP Degisti'],...history.map(x=>[x.ip,fmtDate(x.time),fmtTime(x.time),x.changed?'Evet':'Hayir'])];download('\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n'),'text/csv;charset=utf-8','internet-cikis-ip-gecmisi.csv');}
+function clearHistory(){if(confirm('Tüm IP geçmişi silinsin mi?')){historyRevision++;volatileHistory=[];try{localStorage.removeItem(KEY);memoryOnly=false;$('status').textContent='Geçmiş temizlendi.';}catch{$('status').textContent='Kalıcı depolamaya erişilemedi; yalnızca oturum kayıtları temizlendi.';}render();}}
+function showGroups(target,data){const container=$(target),opened=new Set([...container.querySelectorAll('details[open]')].map(d=>d.dataset.name)),first=!container.children.length;container.innerHTML=Object.entries(data).map(([name,rows])=>`<details data-name="${escapeHtml(name)}" ${first||opened.has(name)?'open':''}><summary>${escapeHtml(name)}</summary><table><tbody>${Object.entries(rows).map(([key,value])=>`<tr><td>${escapeHtml(key)}</td><td>${escapeHtml(textValue(value))}</td></tr>`).join('')}</tbody></table></details>`).join('');}
+function put(group,rows){info[group]=rows;showGroups('information',info);}function picked(obj,keys){return Object.fromEntries(keys.map(k=>[k,obj?.[k]??null]));}
+function supported(v){return v?'Destekleniyor':'Desteklenmiyor';}function bytes(v){return Number.isFinite(v)?(v/1048576).toLocaleString('tr-TR',{maximumFractionDigits:2})+' MiB':NA;}
+function limited(p,ms=7000){let timer;return Promise.race([p,new Promise((_,reject)=>timer=setTimeout(()=>reject(Error('Sorgu zaman aşımı')),ms))]).finally(()=>clearTimeout(timer));}
+function errorText(e){return ({NotAllowedError:'İzin verilmedi veya site politikası engelledi.',NotFoundError:'Cihaz bulunamadı veya seçim iptal edildi.',NotReadableError:'Cihaz kullanımda veya işletim sistemi erişimi engelledi.',SecurityError:'Güvenli bağlantı / site politikası erişimi engelledi.',AbortError:'İşlem iptal edildi.',NotSupportedError:'Bu tarayıcıda desteklenmiyor.'})[e.name]||e.message||'Sorgu tamamlanamadı.';}
+async function probe(group,fn){try{put(group,await limited(fn()));}catch(e){put(group,{'Durum':errorText(e)});}}
+function basics(){const n=navigator,ua=n.userAgentData;put('Tarayıcı ve işletim sistemi',{'User-Agent':n.userAgent,'Tarayıcı markaları (bildirilen)':ua?.brands,'Mobil (bildirilen)':ua?.mobile,'Platform (bildirilen)':ua?.platform||n.platform,'Tarayıcı üreticisi':n.vendor,'Dil':n.language,'Tercih edilen diller':n.languages,'Çerez desteği (bildirilen)':n.cookieEnabled,'PDF görüntüleyici':n.pdfViewerEnabled,'Otomasyon işareti':n.webdriver,'Do Not Track':n.doNotTrack,'Global Privacy Control':n.globalPrivacyControl,'Saat dilimi':Intl.DateTimeFormat().resolvedOptions().timeZone,'Yerel zaman':new Date().toLocaleString('tr-TR'),'UTC farkı (dakika)':-new Date().getTimezoneOffset()});put('Donanım ve giriş',{'Mantıksal işlemci sayısı (bildirilen)':n.hardwareConcurrency,'Yaklaşık RAM (GiB; yuvarlanmış/sınırlı)':n.deviceMemory,'Azami dokunma noktası':n.maxTouchPoints,'Hassas işaretçi':matchMedia('(pointer: fine)').matches,'Kaba işaretçi':matchMedia('(pointer: coarse)').matches,'Hover desteği':matchMedia('(hover: hover)').matches,'Oyun kolları':'Bağlı kol üzerinde bir tuşa basıp bilgileri yenileyin.'});try{info['Donanım ve giriş']['Oyun kolları']=n.getGamepads?[...n.getGamepads()].filter(Boolean).map(g=>({ad:g.id,bagli:g.connected,tuslar:g.buttons.length,eksenler:g.axes.length,esleme:g.mapping})):NA;}catch{}
+put('Ekran ve görünüm',{'Ekran (CSS piksel)':screen.width+' × '+screen.height,'Kullanılabilir alan (CSS piksel)':screen.availWidth+' × '+screen.availHeight,'Pencere iç alanı':innerWidth+' × '+innerHeight,'Pencere dış alanı':outerWidth+' × '+outerHeight,'Piksel oranı':devicePixelRatio,'Renk derinliği (bit)':screen.colorDepth,'Piksel derinliği (bit)':screen.pixelDepth,'Yön':screen.orientation?.type,'Dönüş açısı':screen.orientation?.angle,'Birden çok ekran (bildirilen)':screen.isExtended,'Koyu tema tercihi':matchMedia('(prefers-color-scheme: dark)').matches,'Azaltılmış hareket':matchMedia('(prefers-reduced-motion: reduce)').matches,'Yüksek dinamik aralık':matchMedia('(dynamic-range: high)').matches,'P3 renk gamı':matchMedia('(color-gamut: p3)').matches,'Zorunlu renkler':matchMedia('(forced-colors: active)').matches});const c=n.connection||n.mozConnection||n.webkitConnection;put('Bağlantı',{'Çevrimiçi işareti (internet garantisi değildir)':n.onLine,'Bağlantı türü':c?.type,'Etkin bağlantı sınıfı':c?.effectiveType,'Tahmini indirme (Mbps; hız testi değildir)':c?.downlink,'Tahmini gecikme (ms)':c?.rtt,'Veri tasarrufu':c?.saveData,'IPv6 / yerel IP':'Bu sürüm IP geçmişine genel IPv4 kaydeder; yerel ağ taraması yapmaz.'});put('Sayfa ve destek',{'Güvenli bağlam':isSecureContext,'Protokol':location.protocol,'Kaynak':location.origin,'Görünürlük':document.visibilityState,'Cross-origin isolation':crossOriginIsolated,'WebAssembly':supported(window.WebAssembly),'WebRTC':supported(window.RTCPeerConnection),'WebGPU':supported(n.gpu),'Service Worker':supported(n.serviceWorker),'Bluetooth':supported(n.bluetooth),'WebUSB':supported(n.usb),'WebHID':supported(n.hid),'Seri port API':supported(n.serial),'Yerel font API':supported(window.queryLocalFonts),'Çoklu ekran API':supported(window.getScreenDetails),'Medya cihaz API':supported(n.mediaDevices),'Desteklenen medya kısıtları':n.mediaDevices?.getSupportedConstraints?.()});showGroups('information',info);}
+async function mediaList(){if(!navigator.mediaDevices?.enumerateDevices)return {'Durum':NA};const devices=await navigator.mediaDevices.enumerateDevices();return {'Cihazlar':devices.map(d=>({tur:d.kind,ad:d.label||'İzin olmadan gizli',cihazKimligi:d.deviceId||'Gizli',grupKimligi:d.groupId||'Gizli'})),'Not':'Liste izin ve tarayıcı politikasına göre sınırlanabilir. Kimlikler tarayıcı/siteye özeldir.'};}
+async function permissions(){const states={};for(const name of ['geolocation','camera','microphone','notifications','persistent-storage','clipboard-read','clipboard-write','midi','local-fonts','window-management','accelerometer','gyroscope','magnetometer','display-capture']){try{const p=await navigator.permissions.query({name});states[name]=({granted:'İzin verilmiş',denied:'Engellenmiş',prompt:'Gerekirse izin istenir'})[p.state]||p.state;}catch{states[name]='İzin durumu sorgulanamıyor';}}return states;}
+async function collectInfo(){$('refreshButton').disabled=true;$('infoStatus').textContent='Bilgiler sorgulanıyor…';try{basics();await Promise.allSettled([
+probe('Ayrıntılı platform bilgileri',async()=>navigator.userAgentData?.getHighEntropyValues?await navigator.userAgentData.getHighEntropyValues(['architecture','bitness','model','platformVersion','uaFullVersion','fullVersionList','wow64','formFactors']):{'Durum':NA}),
+probe('Batarya',async()=>{if(!navigator.getBattery)return {'Durum':NA};const b=await navigator.getBattery();return {'Seviye':Math.round(b.level*100)+'%','Şarj oluyor':b.charging,'Şarja kalan süre (saniye)':Number.isFinite(b.chargingTime)?b.chargingTime:'Bildirilmedi','Boşalmaya kalan süre (saniye)':Number.isFinite(b.dischargingTime)?b.dischargingTime:'Bildirilmedi'};}),
+probe('Depolama ve bellek',async()=>{const s=await navigator.storage?.estimate?.();return {'Bu kaynak için kullanılan alan':bytes(s?.usage),'Bu kaynak için tahmini kota (disk kapasitesi değildir)':bytes(s?.quota),'Kalıcı depolama':await navigator.storage?.persisted?.(),'JS heap kullanım (tarayıcıya özgü)':bytes(performance.memory?.usedJSHeapSize),'JS heap sınırı':bytes(performance.memory?.jsHeapSizeLimit)};}),
+probe('Medya cihazları',mediaList),probe('İzin durumları',permissions),
+probe('Grafik',async()=>{const canvas=document.createElement('canvas'),gl=canvas.getContext('webgl2')||canvas.getContext('webgl');if(!gl)return {'WebGL':NA};try{const ext=gl.getExtension('WEBGL_debug_renderer_info');return {'WebGL sürümü':gl.getParameter(gl.VERSION),'GLSL':gl.getParameter(gl.SHADING_LANGUAGE_VERSION),'Üretici (bildirilen)':ext?gl.getParameter(ext.UNMASKED_VENDOR_WEBGL):gl.getParameter(gl.VENDOR),'Grafik işleyici (bildirilen)':ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),'Azami doku boyutu':gl.getParameter(gl.MAX_TEXTURE_SIZE),'Uzantılar':gl.getSupportedExtensions(),'Not':'Sürücü adı sanallaştırılmış veya gizlenmiş olabilir.'};}finally{gl.getExtension('WEBGL_lose_context')?.loseContext();}})
+]);$('infoStatus').textContent='Son sorgu: '+new Date().toLocaleString('tr-TR');}finally{$('refreshButton').disabled=false;}}
+const featureSupport={geo:!!navigator.geolocation,camera:!!navigator.mediaDevices?.getUserMedia,microphone:!!navigator.mediaDevices?.getUserMedia,screens:!!window.getScreenDetails,fonts:!!window.queryLocalFonts,usb:!!navigator.usb,hid:!!navigator.hid,bluetooth:!!navigator.bluetooth};
+const labels={geo:'Konum',camera:'Kamera',microphone:'Mikrofon',screens:'Tüm ekranlar',fonts:'Yerel yazı tipleri',usb:'Seçilen USB cihazı',hid:'Seçilen HID cihazları',bluetooth:'Seçilen Bluetooth cihazı'};
+async function requestExtra(kind,button){button.disabled=true;$('extraStatus').textContent=labels[kind]+': sorgulanıyor; varsa tarayıcı izin penceresini yanıtlayın.';let stream;try{if(!featureSupport[kind])throw Error(NA);let result;
+if(kind==='geo'){const p=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:15000,maximumAge:0}));result={'Enlem':p.coords.latitude,'Boylam':p.coords.longitude,'Doğruluk (metre)':p.coords.accuracy,'Yükseklik (metre)':p.coords.altitude,'Yükseklik doğruluğu (metre)':p.coords.altitudeAccuracy,'Hız (m/s)':p.coords.speed,'Yön (derece)':p.coords.heading,'Ölçüm zamanı':new Date(p.timestamp).toLocaleString('tr-TR')};}
+if(kind==='camera'||kind==='microphone'){stream=await navigator.mediaDevices.getUserMedia(kind==='camera'?{video:true,audio:false}:{audio:true,video:false});try{result={'Etkin cihaz bilgileri':stream.getTracks().map(t=>({tur:t.kind,ad:t.label,ayarlar:t.getSettings(),yetenekler:t.getCapabilities?.()}))};}finally{stream.getTracks().forEach(t=>t.stop());stream=null;}put('Medya cihazları',await mediaList());}
+if(kind==='screens'){const d=await window.getScreenDetails();result={'Ekranlar':d.screens.map(s=>picked(s,['label','width','height','availWidth','availHeight','left','top','availLeft','availTop','colorDepth','pixelDepth','devicePixelRatio','isPrimary','isInternal']))};}
+if(kind==='fonts'){const fonts=await window.queryLocalFonts();result={'Font sayısı':fonts.length,'Fontlar':fonts.map(f=>picked(f,['family','fullName','style','postscriptName']))};}
+if(kind==='usb'){const d=await navigator.usb.requestDevice({filters:[]});result=picked(d,['productName','manufacturerName','vendorId','productId','serialNumber','usbVersionMajor','usbVersionMinor','deviceVersionMajor','deviceVersionMinor']);}
+if(kind==='hid'){const devices=await navigator.hid.requestDevice({filters:[]});result=devices.length?{'Cihazlar':devices.map(d=>picked(d,['productName','vendorId','productId']))}:{'Durum':'Cihaz seçilmedi.'};}
+if(kind==='bluetooth'){const d=await navigator.bluetooth.requestDevice({acceptAllDevices:true});result=picked(d,['name','id']);}
+extra[labels[kind]]=result;$('extraStatus').textContent=labels[kind]+': sorgu tamamlandı.';
+}catch(e){const message=kind==='geo'&&e.code?({1:'Konum izni verilmedi.',2:'Konum belirlenemedi.',3:'Konum sorgusu zaman aşımına uğradı.'})[e.code]:errorText(e);extra[labels[kind]]={'Durum':message};$('extraStatus').textContent=labels[kind]+': '+message;}finally{stream?.getTracks().forEach(t=>t.stop());button.disabled=false;showGroups('extras',extra);probe('İzin durumları',permissions);}}
+function downloadReport(){download(JSON.stringify({olusturulma:new Date().toISOString(),bilgiler:info,izinliBilgiler:extra,ipGecmisi:getHistory()},null,2),'application/json;charset=utf-8','internet-cihaz-raporu.json');}
+$('contextNotice').textContent=isSecureContext?'İzinli özelliklerin kullanılabilirliği tarayıcıya ve site politikasına bağlıdır.':'Bu sayfa güvenli bağlamda değil. İzinli özellikler için HTTPS veya localhost üzerinden açın.';
+for(const b of document.querySelectorAll('[data-feature]'))if(!featureSupport[b.dataset.feature]){b.disabled=true;b.title='Bu tarayıcı veya bağlamda desteklenmiyor';b.insertAdjacentHTML('afterend','<p>Bu tarayıcı / bağlamda desteklenmiyor.</p>');}
+window.addEventListener('storage',e=>{if(e.key===KEY||e.key===null)render();});window.addEventListener('online',()=>{if(info['Bağlantı']){info['Bağlantı']['Çevrimiçi işareti (internet garantisi değildir)']=true;showGroups('information',info);}});window.addEventListener('offline',()=>{if(info['Bağlantı']){info['Bağlantı']['Çevrimiçi işareti (internet garantisi değildir)']=false;showGroups('information',info);}});
+render();detectIp();collectInfo();
+</script></body></html>
