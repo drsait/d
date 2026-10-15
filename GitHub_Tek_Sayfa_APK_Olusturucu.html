@@ -1,0 +1,46 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>APK Oluşturucu</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1220;color:#eaf1ff;font:15px system-ui,sans-serif}main{max-width:570px;margin:30px auto;padding:22px;background:#151f31;border:1px solid #30405b;border-radius:20px}h1{margin:0 0 8px;font-size:25px}p,small{color:#b9c8dd;line-height:1.5}label{display:block;margin:15px 0 6px;font-weight:600}input{width:100%;padding:13px;background:#0c1627;color:#fff;border:1px solid #4c5b71;border-radius:10px;font:inherit}button,.link{width:100%;display:block;text-align:center;border:0;border-radius:10px;background:#65b3ff;color:#061424;padding:14px;font:inherit;font-weight:700;margin-top:18px;text-decoration:none}button:disabled{opacity:.55}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0a1323;padding:13px;border-radius:10px;min-height:80px;font:13px/1.5 ui-monospace,monospace}a{color:#8bc6ff}.hidden{display:none}.note{font-size:12px}strong{color:white}</style></head><body><main><h1>📱 GitHub APK Oluşturucu</h1><p>Android projesinin <strong>ZIP dosyasını</strong> seç. GitHub Actions APK'yı derlesin. Bilgisayar gerekmez.</p><label>GitHub kullanıcı adı</label><input id="owner" value="drsait" spellcheck="false"><label>Depo adı</label><input id="repo" value="d" spellcheck="false"><label>GitHub erişim anahtarı (PAT)</label><input id="token" type="password" autocomplete="off" placeholder="github_pat_... veya ghp_..."><small>Fine-grained PAT: d deposuna <strong>Contents: Read and write</strong>, <strong>Actions: Read and write</strong> ve <strong>Workflows: Read and write</strong> (varsa) yetkisi ver. Klasik PAT için repo ve workflow kapsamları gerekir. Anahtar saklanmaz.</small><label>Android proje dosyası (.zip)</label><input id="file" type="file" accept=".zip,application/zip"><small>ZIP içinde <strong>settings.gradle</strong> veya <strong>settings.gradle.kts</strong> ve Android app modülü bulunmalı. Sıradan HTML dosyası Android projesi değildir.</small><button id="go">APK oluştur</button><pre id="status">Hazır.</pre><a class="link hidden" id="actions" target="_blank" rel="noopener">GitHub Actions sayfasını aç</a><a class="link hidden" id="artifact" target="_blank" rel="noopener">Oluşturulan APK paketini indir</a><p class="note">APK, GitHub sunucularında oluşturulur. Derleme hatası varsa Actions kayıtlarından görülebilir. Bu araç GitHub Pages üzerinde yayımlanırsa PAT'ı yalnızca güvendiğin sayfada kullan.</p></main><script>
+const $=x=>document.getElementById(x),log=s=>{$('status').textContent+='\n'+s};
+const workflow=`name: Android APK Builder
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Extract Android project
+        run: |
+          mkdir -p extracted
+          unzip -q android-project.zip -d extracted
+          find extracted -name settings.gradle -o -name settings.gradle.kts
+      - name: Build APK
+        shell: bash
+        run: |
+          set -e
+          SETTINGS=$(find extracted -type f \\( -name settings.gradle -o -name settings.gradle.kts \\) -print -quit)
+          if [ -z "$SETTINGS" ]; then echo "ZIP içinde Android Gradle projesi bulunamadı"; exit 1; fi
+          cd "$(dirname "$SETTINGS")"
+          if [ -f gradlew ]; then chmod +x gradlew; ./gradlew --no-daemon assembleDebug; else gradle --no-daemon assembleDebug; fi
+      - name: Publish APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-APK
+          path: extracted/**/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+`;
+async function api(path,method='GET',data,token){let r=await fetch('https://api.github.com'+path,{method,headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token,'X-GitHub-Api-Version':'2022-11-28',...(data?{'Content-Type':'application/json'}:{})},body:data?JSON.stringify(data):undefined});let j=await r.json().catch(()=>({}));if(!r.ok)throw Error(r.status+' '+(j.message||'GitHub API hatası'));return j}
+function base64Bytes(bytes){let parts=[];for(let i=0;i<bytes.length;i+=8192)parts.push(String.fromCharCode(...bytes.subarray(i,i+8192)));return btoa(parts.join(''))}
+function base64Text(s){return base64Bytes(new TextEncoder().encode(s))}
+async function put(base,path,content,branch,token){let url=base+'/contents/'+path,sha;try{sha=(await api(url+'?ref='+encodeURIComponent(branch),'GET',null,token)).sha}catch(e){if(!String(e.message).startsWith('404'))throw e}return api(url,'PUT',{message:'Update APK builder: '+path,content,branch,...(sha?{sha}:{})},token)}
+$('go').onclick=async()=>{let owner=$('owner').value.trim(),repo=$('repo').value.trim(),token=$('token').value.trim(),file=$('file').files[0];if(!owner||!repo||!token||!file){alert('Tüm alanları doldur ve ZIP seç.');return}if(!/\.zip$/i.test(file.name)){alert('Android proje ZIP dosyası seç.');return}if(file.size>75*1024*1024){alert('Bu araç için ZIP 75 MB altında olmalı.');return}let base='/repos/'+encodeURIComponent(owner)+'/'+encodeURIComponent(repo);$('go').disabled=true;$('status').textContent='Depo kontrol ediliyor...';$('artifact').classList.add('hidden');$('actions').classList.add('hidden');try{let info=await api(base,'GET',null,token),branch=info.default_branch;if(!branch)throw Error('Depo boş görünüyor. Önce README dosyasıyla ilk commit oluştur.');log('ZIP okunuyor: '+file.name);let bytes=new Uint8Array(await file.arrayBuffer());if(bytes[0]!==80||bytes[1]!==75)throw Error('Geçerli ZIP dosyası değil.');log('Android projesi GitHub\'a yükleniyor...');await put(base,'android-project.zip',base64Bytes(bytes),branch,token);log('Derleme iş akışı yükleniyor...');await put(base,'.github/workflows/android-apk.yml',base64Text(workflow),branch,token);let actionsUrl='https://github.com/'+encodeURIComponent(owner)+'/'+encodeURIComponent(repo)+'/actions/workflows/android-apk.yml';$('actions').href=actionsUrl;$('actions').classList.remove('hidden');log('APK derlemesi başlatılıyor...');await api(base+'/actions/workflows/android-apk.yml/dispatches','POST',{ref:branch},token);log('Başlatıldı. Sonuç kontrol ediliyor...');let started=Date.now(),runId=null;for(let n=0;n<45;n++){await new Promise(r=>setTimeout(r,8000));let runs=await api(base+'/actions/workflows/android-apk.yml/runs?per_page=10','GET',null,token);let run=runs.workflow_runs?.find(x=>new Date(x.created_at).getTime()>=started-15000);if(!run)continue;if(runId!==run.id){runId=run.id;log('Çalışma bulundu: #'+run.run_number)}if(run.status==='completed'){if(run.conclusion!=='success')throw Error('Derleme '+run.conclusion+'. Ayrıntılar: '+run.html_url);let arts=await api(base+'/actions/runs/'+run.id+'/artifacts','GET',null,token);let a=arts.artifacts?.find(x=>x.name==='Android-APK');if(a){$('artifact').href=run.html_url+'#artifacts';$('artifact').classList.remove('hidden');log('BAŞARILI! APK paketini GitHub Actions üzerinden indir.');}else log('Derleme başarılı fakat APK paketi listelenemedi. Actions sayfasını kontrol et.');return}}log('Kontrol süresi doldu. Derleme Actions sayfasında devam ediyor olabilir.')}catch(e){log('HATA: '+e.message+'\nToken yetkilerini, depo ayarlarını ve Actions günlüklerini kontrol et.')}finally{$('go').disabled=false}};
+</script></body></html>
