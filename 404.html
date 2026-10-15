@@ -1,1 +1,43 @@
-<!doctype html><html lang="tr"><meta charset="utf-8"><title>Yönlendiriliyor</title><script>if(location.pathname.startsWith('/d/url/')){sessionStorage.setItem('minilink_redirect',location.pathname+location.search+location.hash);location.replace('/d/url/?redirect=1')}else{document.write('Sayfa bulunamadı')}</script></html>
+
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yenileniyor</title>
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: bold 28px Arial;
+  background: #111827;
+  color: white;
+}
+</style>
+</head>
+<body>
+<div id="sayac"></div>
+
+<script>
+let sayi = Number(sessionStorage.getItem("yenilemeSayisi") || 0);
+
+document.getElementById("sayac").textContent =
+  sayi + " kez yenilendi";
+
+if (location.pathname.startsWith("/d/url/")) {
+  sessionStorage.setItem(
+    "minilink_redirect",
+    location.pathname + location.search + location.hash
+  );
+}
+
+setTimeout(() => {
+  sessionStorage.setItem("yenilemeSayisi", sayi + 1);
+  location.reload();
+}, 1000);
+</script>
+</body>
+</html>
