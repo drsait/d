@@ -192,6 +192,14 @@
       "addedAt": "2026-10-15T21:58:35.416Z",
       "originalModified": "2026-10-15T21:57:59.000Z",
       "mime": "text/html"
+    },
+    "DosyalarimAndroid.zip": {
+      "sha": "268eb7f3b75a6331dede1f125dd5ba22e2450807",
+      "uploadedAt": "2026-10-15T22:07:41.371Z",
+      "modifiedAt": "2026-10-15T22:07:41.371Z",
+      "addedAt": "2026-10-15T22:07:41.371Z",
+      "originalModified": "2026-10-15T21:55:18.000Z",
+      "mime": "application/zip"
     }
   },
   "folders": {
