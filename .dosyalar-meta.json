@@ -193,6 +193,14 @@
       "addedAt": "2026-10-16T23:21:18.825Z",
       "originalModified": "2026-10-15T21:23:57.900Z",
       "mime": "application/x-msdownload"
+    },
+    "arşiv/JoystickDesktop.exe": {
+      "sha": "92239197f0152b03a668fa84f6873dd392847fab",
+      "uploadedAt": "2026-10-16T23:55:50.363Z",
+      "modifiedAt": "2026-10-16T23:55:50.363Z",
+      "addedAt": "2026-10-16T23:55:50.363Z",
+      "originalModified": "2026-10-16T23:54:13.959Z",
+      "mime": "application/octet-stream"
     }
   },
   "folders": {
