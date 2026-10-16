@@ -1,0 +1,47 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>APK Oluşturucu</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{background:#0b1220;color:#eef5ff;font:15px system-ui;margin:0;padding:18px}main{max-width:600px;margin:auto;padding:22px;border-radius:18px;background:#162238;border:1px solid #364861}h1{font-size:23px;margin:0 0 8px}p,small{color:#b9c8dd;line-height:1.55}label{display:block;font-weight:650;margin:15px 0 6px}input{width:100%;border:1px solid #516581;border-radius:10px;padding:12px;background:#0c1729;color:white;font:inherit}button{width:100%;border:0;border-radius:10px;padding:15px;background:#6db7ff;color:#07172b;font:inherit;font-weight:750;margin-top:18px}button:disabled{opacity:.55}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0a1323;padding:14px;border-radius:10px;min-height:85px;font:12px/1.65 ui-monospace,monospace}a{color:#8dccff}.hidden{display:none}.download{display:block;text-align:center;background:#37d39c;color:#071c16;padding:15px;margin-top:14px;border-radius:10px;text-decoration:none;font-weight:750}progress{width:100%;margin-top:12px}.hint{font-size:12px}</style></head><body><main><h1>📱 APK Oluşturucu ve Hata Tanılama</h1><p>Android proje ZIP dosyasını seç. GitHub'a yükleme, derleme, takip ve APK indirme işlemleri bu sayfadan yürütülür.</p><label>GitHub kullanıcı adı</label><input id="owner" value="drsait"><label>Depo</label><input id="repo" value="d"><label>GitHub erişim anahtarı (PAT)</label><input id="token" type="password" autocomplete="new-password" spellcheck="false" placeholder="ghp_..."><small>Anahtar yalnızca GitHub API isteklerinde kullanılır; tarayıcıda saklanmaz. Klasik PAT için repo + workflow izinleri gerekir.</small><label>Android projesi (.zip)</label><input id="file" type="file" accept=".zip,application/zip"><button id="go">APK OLUŞTUR VE İNDİR</button><progress id="progress" class="hidden"></progress><pre id="status">Hazır.</pre><a id="download" class="download hidden" download="Dosyalarim-APK.zip">APK paketini indir</a><p class="hint">APK, GitHub Actions üzerinde derlenir. İndirme paketi ZIP biçimindedir ve içinden .apk çıkar. GitHub'ın artifact indirme yönlendirmesi tarayıcı güvenlik kısıtına takılırsa doğrudan indirme yerine bilgilendirici hata gösterilir. Sayfayı güvenilir bir HTTPS adresinden aç.</p></main><script>
+const $=id=>document.getElementById(id),sleep=ms=>new Promise(r=>setTimeout(r,ms));function log(t){$('status').textContent+='\n'+t;$('status').scrollTop=$('status').scrollHeight}
+const workflow=`name: Android APK Builder
+on:
+  push:
+    paths:
+      - 'android-project.zip'
+      - '.github/workflows/android-apk.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Extract Android project
+        run: unzip -q android-project.zip -d extracted
+      - name: Build APK
+        shell: bash
+        run: |
+          set -e
+          SETTINGS=$(find extracted -type f \\( -name settings.gradle -o -name settings.gradle.kts \\) -print -quit)
+          if [ -z "$SETTINGS" ]; then echo "ZIP icinde Gradle projesi yok"; exit 1; fi
+          cd "$(dirname "$SETTINGS")"
+          if [ -f gradlew ]; then chmod +x gradlew; ./gradlew --no-daemon assembleDebug; else gradle --no-daemon assembleDebug; fi
+      - name: Publish APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-APK
+          path: extracted/**/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+`;
+async function api(path,method='GET',data,token){let r=await fetch('https://api.github.com'+path,{method,headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token,'X-GitHub-Api-Version':'2022-11-28',...(data?{'Content-Type':'application/json'}:{})},body:data?JSON.stringify(data):undefined});let j=await r.json().catch(()=>({}));if(!r.ok){let e=new Error(method+' '+path+' → '+r.status+' '+(j.message||r.statusText));e.status=r.status;throw e}return j}
+function b64(bytes){let s='';for(let i=0;i<bytes.length;i+=8192)s+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(s)}
+async function put(base,path,content,branch,token){let url=base+'/contents/'+path.split('/').map(encodeURIComponent).join('/'),sha;try{sha=(await api(url+'?ref='+encodeURIComponent(branch),'GET',null,token)).sha}catch(e){if(e.status!==404)throw e}return api(url,'PUT',{message:'APK builder: '+path,content,branch,...(sha?{sha}:{})},token)}
+async function downloadArtifact(base,id,token){const endpoint='https://api.github.com'+base+'/actions/artifacts/'+id+'/zip';let response;try{response=await fetch(endpoint,{headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}})}catch(e){throw Error('Artifact indirme yönlendirmesi tarayıcı tarafından engellendi (CORS). GitHub API ZIP indirmesini doğrudan HTML üzerinden her tarayıcıda desteklemiyor. '+e.message)}if(!response.ok)throw Error('APK paketi indirilemedi: HTTP '+response.status);let bytes=await response.blob();if(bytes.size<100)throw Error('İndirilen dosya beklenenden küçük.');return bytes}
+$('go').onclick=async()=>{const owner=$('owner').value.trim(),repo=$('repo').value.trim(),token=$('token').value.trim(),file=$('file').files[0];if(!owner||!repo||!token||!file)return alert('Tüm alanları doldur ve ZIP seç.');if(!/\.zip$/i.test(file.name))return alert('ZIP dosyası seç.');if(file.size>75*1024*1024)return alert('ZIP 75 MB altında olmalı.');$('go').disabled=true;$('progress').classList.remove('hidden');$('status').textContent='Depo kontrol ediliyor...';$('download').classList.add('hidden');let base='/repos/'+encodeURIComponent(owner)+'/'+encodeURIComponent(repo);try{const info=await api(base,'GET',null,token),branch=info.default_branch;if(!branch)throw Error('Depo boş. Önce README ile ilk commit oluştur.');let bytes=new Uint8Array(await file.arrayBuffer());if(bytes[0]!==80||bytes[1]!==75)throw Error('ZIP dosyası geçersiz.');log('Android projesi yükleniyor...');await put(base,'android-project.zip',b64(bytes),branch,token);let stamp=Date.now();log('Derleme iş akışı yükleniyor...');await put(base,'.github/workflows/android-apk.yml',b64(new TextEncoder().encode(workflow)),branch,token);log('GitHub Actions çalışması bekleniyor...');let run=null;for(let i=0;i<90;i++){await sleep(8000);let runs=await api(base+'/actions/runs?per_page=30&branch='+encodeURIComponent(branch),'GET',null,token);let found=runs.workflow_runs?.find(x=>x.path?.endsWith('/android-apk.yml')&&new Date(x.created_at).getTime()>stamp-60000);if(!found)continue;if(!run||run.id!==found.id){log('Derleme bulundu: #'+found.run_number);run=found}if(found.status!=='completed'){if(i%4===0)log('Durum: '+found.status);continue}if(found.conclusion!=='success'){let jobs=await api(base+'/actions/runs/'+found.id+'/jobs?per_page=100','GET',null,token);for(const job of jobs.jobs||[]){log('İş: '+job.name+' — '+job.conclusion);for(const step of job.steps||[]){if(step.conclusion==='failure')log('BAŞARISIZ ADIM: '+step.name+' ('+step.conclusion+')')}try{let checks=await api(base+'/check-runs/'+job.check_run_url.split('/').pop()+'/annotations?per_page=100','GET',null,token);for(const c of checks)log('HATA AYRINTISI: '+(c.message||'')+' '+(c.path||''))}catch(e){log('Ek hata açıklaması alınamadı: '+e.message)}}throw Error('Derleme başarısız: '+found.conclusion+'. Yukarıdaki başarısız adımı kontrol et.');}log('Derleme başarılı! APK paketi aranıyor...');let arts=await api(base+'/actions/runs/'+found.id+'/artifacts','GET',null,token);let a=arts.artifacts?.find(x=>x.name==='Android-APK'&&!x.expired);if(!a)throw Error('Derleme tamamlandı ama APK paketi bulunamadı.');log('APK paketi indiriliyor...');let blob=await downloadArtifact(base,a.id,token);let url=URL.createObjectURL(blob);$('download').href=url;$('download').classList.remove('hidden');$('download').click();log('Tamamlandı. İndirme başlamadıysa yeşil düğmeye bas.');return}throw Error('Derleme kontrolü zaman aşımına uğradı.')}catch(e){log('HATA: '+e.message)}finally{$('token').value='';$('go').disabled=false;$('progress').classList.add('hidden')}};
+</script></body></html>
