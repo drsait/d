@@ -185,6 +185,14 @@
       "originalModified": "2026-10-16T18:51:00.339Z",
       "mime": "application/x-msdownload",
       "movedAt": "2026-10-16T18:52:35.083Z"
+    },
+    "arşiv/DriverYukleGuncelle.exe": {
+      "sha": "8afa1b5e79ea28f6329ad66c359ed0b2646e4c14",
+      "uploadedAt": "2026-10-16T23:21:18.825Z",
+      "modifiedAt": "2026-10-16T23:21:18.825Z",
+      "addedAt": "2026-10-16T23:21:18.825Z",
+      "originalModified": "2026-10-15T21:23:57.900Z",
+      "mime": "application/x-msdownload"
     }
   },
   "folders": {
