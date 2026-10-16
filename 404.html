@@ -3,36 +3,27 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Yenileniyor</title>
+<title>Sayfa Bulunamadı</title>
 <style>
 body {
   margin: 0;
   height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   font: bold 28px Arial;
-  background: #111827;
-  color: white;
+  text-align: center;
 }
 </style>
 </head>
 <body>
+<div>Sayfa bulunamadı.</div>
 <div id="sayac"></div>
 
 <script>
 let sayi = Number(sessionStorage.getItem("yenilemeSayisi") || 0);
-
-document.getElementById("sayac").textContent =
-  "Sayfa bulunamadı." + sayi + " . deneme";
-
-if (location.pathname.startsWith("/d/url/")) {
-  sessionStorage.setItem(
-    "minilink_redirect",
-    location.pathname + location.search + location.hash
-  );
-}
+document.getElementById("sayac").textContent = sayi + ". deneme";
 
 setTimeout(() => {
   sessionStorage.setItem("yenilemeSayisi", sayi + 1);
