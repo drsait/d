@@ -165,6 +165,14 @@
       "addedAt": "2026-10-16T07:25:23.748Z",
       "originalModified": "2026-10-16T07:25:09.975Z",
       "mime": "text/html"
+    },
+    "apk/dosyalar.apk": {
+      "sha": "dee5e9927824264b35b3b54f5cab2450909e43b4",
+      "uploadedAt": "2026-10-16T07:30:53.370Z",
+      "modifiedAt": "2026-10-16T07:30:53.370Z",
+      "addedAt": "2026-10-16T07:30:53.370Z",
+      "originalModified": "2026-10-16T04:28:28.000Z",
+      "mime": "application/vnd.android.package-archive"
     }
   },
   "folders": {
