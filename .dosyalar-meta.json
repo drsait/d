@@ -159,14 +159,6 @@
       "mime": "text/html",
       "movedAt": "2026-10-16T11:44:44.103Z"
     },
-    "Dosyalarim_XP_surukle_tasi_onay.html": {
-      "sha": "6fbf4b1eca2f2fe32fa5d2256cc9106150167bfc",
-      "uploadedAt": "2026-10-16T11:55:07.818Z",
-      "modifiedAt": "2026-10-16T11:55:07.818Z",
-      "addedAt": "2026-10-16T11:55:07.818Z",
-      "originalModified": "2026-10-16T11:55:01.430Z",
-      "mime": "text/html"
-    },
     "arşiv/1.png": {
       "sha": "2907196e49ac330a62e34ce93a3956014fbaf347",
       "uploadedAt": "2026-10-13T20:49:28.821Z",
@@ -184,6 +176,15 @@
       "originalModified": "2026-10-16T09:19:32.025Z",
       "mime": "text/html",
       "movedAt": "2026-10-16T11:57:48.682Z"
+    },
+    "index.html": {
+      "sha": "6fbf4b1eca2f2fe32fa5d2256cc9106150167bfc",
+      "uploadedAt": "2026-10-16T11:55:07.818Z",
+      "modifiedAt": "2026-10-16T11:58:54.861Z",
+      "addedAt": "2026-10-16T11:55:07.818Z",
+      "originalModified": "2026-10-16T11:55:01.430Z",
+      "mime": "text/html",
+      "movedAt": "2026-10-16T11:58:54.861Z"
     }
   },
   "folders": {
