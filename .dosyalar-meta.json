@@ -177,13 +177,14 @@
       "mime": "text/html",
       "movedAt": "2026-10-16T11:58:54.861Z"
     },
-    "ahbs.exe": {
+    "arşiv/ahbs.exe": {
       "sha": "d4119fc50dd2a5369c509c9386c8b7af653ad460",
       "uploadedAt": "2026-10-16T18:52:13.167Z",
       "modifiedAt": "2026-10-16T18:52:13.167Z",
       "addedAt": "2026-10-16T18:52:13.167Z",
       "originalModified": "2026-10-16T18:51:00.339Z",
-      "mime": "application/x-msdownload"
+      "mime": "application/x-msdownload",
+      "movedAt": "2026-10-16T18:52:35.083Z"
     }
   },
   "folders": {
