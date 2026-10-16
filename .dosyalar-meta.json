@@ -133,15 +133,6 @@
       "mime": "text/html",
       "movedAt": "2026-10-13T06:48:07.807Z"
     },
-    "1.png": {
-      "sha": "2907196e49ac330a62e34ce93a3956014fbaf347",
-      "uploadedAt": "2026-10-13T20:49:28.821Z",
-      "modifiedAt": "2026-10-13T20:49:28.821Z",
-      "addedAt": "2026-10-13T20:49:28.821Z",
-      "originalModified": "2026-10-13T20:43:46.000Z",
-      "mime": "image/png",
-      "movedAt": "2026-10-13T20:49:52.894Z"
-    },
     "apk/dosyalar.apk": {
       "sha": "dee5e9927824264b35b3b54f5cab2450909e43b4",
       "uploadedAt": "2026-10-16T07:30:53.370Z",
@@ -184,6 +175,15 @@
       "addedAt": "2026-10-16T11:55:07.818Z",
       "originalModified": "2026-10-16T11:55:01.430Z",
       "mime": "text/html"
+    },
+    "arşiv/1.png": {
+      "sha": "2907196e49ac330a62e34ce93a3956014fbaf347",
+      "uploadedAt": "2026-10-13T20:49:28.821Z",
+      "modifiedAt": "2026-10-13T20:49:28.821Z",
+      "addedAt": "2026-10-13T20:49:28.821Z",
+      "originalModified": "2026-10-13T20:43:46.000Z",
+      "mime": "image/png",
+      "movedAt": "2026-10-16T11:56:37.029Z"
     }
   },
   "folders": {
