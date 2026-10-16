@@ -1,0 +1,132 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>APK Oluşturucu</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{background:#0b1220;color:#eef5ff;font:15px system-ui;margin:0;padding:18px}main{max-width:600px;margin:auto;padding:22px;border-radius:18px;background:#162238;border:1px solid #364861}h1{font-size:23px;margin:0 0 8px}p,small{color:#b9c8dd;line-height:1.55}label{display:block;font-weight:650;margin:15px 0 6px}input{width:100%;border:1px solid #516581;border-radius:10px;padding:12px;background:#0c1729;color:white;font:inherit}button{width:100%;border:0;border-radius:10px;padding:15px;background:#6db7ff;color:#07172b;font:inherit;font-weight:750;margin-top:18px}button:disabled{opacity:.55}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0a1323;padding:14px;border-radius:10px;min-height:85px;font:12px/1.65 ui-monospace,monospace}a{color:#8dccff}.hidden{display:none}.download{display:block;text-align:center;background:#37d39c;color:#071c16;padding:15px;margin-top:14px;border-radius:10px;text-decoration:none;font-weight:750}progress{width:100%;margin-top:12px}.hint{font-size:12px}</style></head><body><main><h1>📱 APK Oluşturucu · Önce Temizlik Sonra İndirme</h1><p>Android proje ZIP dosyasını seç. GitHub'a yükleme, derleme, takip ve APK indirme işlemleri bu sayfadan yürütülür.</p><form id="credentials" autocomplete="on"><label>GitHub kullanıcı adı</label><input id="owner" name="username" autocomplete="username" value="drsait"><label>Depo</label><input id="repo" value="d"><label>GitHub erişim anahtarı (PAT)</label><input id="token" name="password" type="password" autocomplete="current-password" spellcheck="false" placeholder="GitHub token seç veya gir"><small>Token alanına dokunarak telefonunun kayıtlı şifrelerinden seçim yapabilirsin (tarayıcı destekliyorsa). Bu sayfa token saklamaz; şifre yöneticin ayrı olarak saklayabilir. Klasik PAT için repo + workflow izinleri gerekir.</small><label>Android projesi (.zip)</label><input id="file" type="file" accept=".zip,application/zip"><button id="go" type="submit">APK OLUŞTUR, TEMİZLE VE HAZIRLA</button></form><progress id="progress" class="hidden"></progress><pre id="status">Hazır.</pre><a id="download" class="download hidden" download="Dosyalarim-APK.zip">Temizlik sonrası APK paketini indir</a><p class="hint">APK paketi önce tarayıcı belleğinde Base64 veri adresine dönüştürülür, ardından GitHub dosyaları temizlenir. İndirme düğmesi ancak bundan sonra görünür. Büyük APK paketlerinde tarayıcı bellek sınırları nedeniyle işlem başarısız olabilir. Önceden mevcut dosyalar değiştirilmişse eski içerikleri geri yüklenir. GitHub commit ve Actions geçmişi kalır. APK, GitHub Actions üzerinde derlenir. İndirme paketi ZIP biçimindedir ve içinden .apk çıkar. GitHub'ın artifact indirme yönlendirmesi tarayıcı güvenlik kısıtına takılırsa doğrudan indirme yerine bilgilendirici hata gösterilir. Sayfayı güvenilir bir HTTPS adresinden aç.</p></main><script>
+const $=id=>document.getElementById(id),sleep=ms=>new Promise(r=>setTimeout(r,ms));function log(t){$('status').textContent+='\n'+t;$('status').scrollTop=$('status').scrollHeight}
+const workflow=`name: Android APK Builder
+on:
+  push:
+    paths:
+      - 'android-project.zip'
+      - '.github/workflows/android-apk.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Configure Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "ANDROID_HOME=\${ANDROID_HOME:-}" 
+          echo "ANDROID_SDK_ROOT=\${ANDROID_SDK_ROOT:-}"
+          SDK="\${ANDROID_HOME:-\${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          if [ ! -d "$SDK" ]; then echo "Android SDK dizini bulunamadı: $SDK"; exit 1; fi
+          SDKMANAGER=$(find "$SDK/cmdline-tools" -type f -name sdkmanager -print -quit 2>/dev/null || true)
+          if [ -z "$SDKMANAGER" ]; then echo "sdkmanager bulunamadı"; exit 1; fi
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Extract Android project
+        shell: bash
+        run: |
+          mkdir -p extracted
+          unzip -q android-project.zip -d extracted
+          find extracted -type f \\( -name settings.gradle -o -name settings.gradle.kts \\)
+      - name: Build APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SETTINGS=$(find extracted -type f \\( -name settings.gradle -o -name settings.gradle.kts \\) -print -quit)
+          if [ -z "$SETTINGS" ]; then
+            echo "ZIP içinde Android Gradle projesi bulunamadı"
+            exit 1
+          fi
+          cd "$(dirname "$SETTINGS")"
+          if [ -f gradlew ]; then
+            chmod +x gradlew
+            ./gradlew --no-daemon assembleDebug
+          else
+            gradle --no-daemon assembleDebug
+          fi
+      - name: Publish APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-APK
+          path: extracted/**/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+`;
+async function api(path,method='GET',data,token){let r=await fetch('https://api.github.com'+path,{method,headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token,'X-GitHub-Api-Version':'2022-11-28',...(data?{'Content-Type':'application/json'}:{})},body:data?JSON.stringify(data):undefined});let j=await r.json().catch(()=>({}));if(!r.ok){let e=new Error(method+' '+path+' → '+r.status+' '+(j.message||r.statusText));e.status=r.status;throw e}return j}
+function b64(bytes){let s='';for(let i=0;i<bytes.length;i+=8192)s+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(s)}
+async function put(base,path,content,branch,token){let url=base+'/contents/'+path.split('/').map(encodeURIComponent).join('/'),sha;try{sha=(await api(url+'?ref='+encodeURIComponent(branch),'GET',null,token)).sha}catch(e){if(e.status!==404)throw e}return api(url,'PUT',{message:'APK builder: '+path,content,branch,...(sha?{sha}:{})},token)}
+async function getFile(base,path,branch,token){
+  try{return await api(base+'/contents/'+path+'?ref='+encodeURIComponent(branch),'GET',null,token)}
+  catch(e){if(e.status===404)return null;throw e}
+}
+async function restoreFile(base,path,previous,branch,token){
+  const endpoint=base+'/contents/'+path;
+  const current=await getFile(base,path,branch,token);
+  if(!current)return;
+  if(previous){
+    if(previous.sha===current.sha)return;
+    const oldContent=previous.content?.replace(/\s/g,'');
+    if(!oldContent)throw Error(path+' eski içeriği alınamadı, otomatik geri yükleme güvenli değil.');
+    await api(endpoint,'PUT',{message:'APK builder: önceki dosyayı geri yükle',content:oldContent,sha:current.sha,branch},token);
+  }else{
+    await api(endpoint,'DELETE',{message:'APK builder: geçici dosyayı temizle',sha:current.sha,branch},token);
+  }
+}
+async function downloadArtifact(base,id,token){const endpoint='https://api.github.com'+base+'/actions/artifacts/'+id+'/zip';let response;try{response=await fetch(endpoint,{headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}})}catch(e){throw Error('Artifact indirme yönlendirmesi tarayıcı tarafından engellendi (CORS). GitHub API ZIP indirmesini doğrudan HTML üzerinden her tarayıcıda desteklemiyor. '+e.message)}if(!response.ok)throw Error('APK paketi indirilemedi: HTTP '+response.status);let bytes=await response.blob();if(bytes.size<100)throw Error('İndirilen dosya beklenenden küçük.');return bytes}
+$('credentials').onsubmit=async(event)=>{event.preventDefault();const owner=$('owner').value.trim(),repo=$('repo').value.trim(),token=$('token').value.trim(),file=$('file').files[0];if(!owner||!repo||!token||!file)return alert('Tüm alanları doldur ve ZIP seç.');if(!/\.zip$/i.test(file.name))return alert('ZIP dosyası seç.');if(file.size>75*1024*1024)return alert('ZIP 75 MB altında olmalı.');$('go').disabled=true;$('progress').classList.remove('hidden');$('status').textContent='Depo kontrol ediliyor...';$('download').classList.add('hidden');$('download').removeAttribute('href');let readyDataUrl=null,cleanupOk=false,buildOk=false;let base='/repos/'+encodeURIComponent(owner)+'/'+encodeURIComponent(repo);let branch='',completed=false,changedZip=false,changedWorkflow=false,previousZip=null,previousWorkflow=null;try{const info=await api(base,'GET',null,token);branch=info.default_branch;if(!branch)throw Error('Depo boş. Önce README ile ilk commit oluştur.');let bytes=new Uint8Array(await file.arrayBuffer());if(bytes[0]!==80||bytes[1]!==75)throw Error('ZIP dosyası geçersiz.');log('İş akışı kontrol ediliyor...');
+let wfPath='.github/workflows/android-apk.yml';
+const existing=await getFile(base,wfPath,branch,token);
+previousWorkflow=existing;
+previousZip=await getFile(base,'android-project.zip',branch,token);
+if(previousZip&&!previousZip.content)throw Error('Depoda mevcut ZIP dosyası API üzerinden yedeklenemiyor; üzerine yazılmadı.');
+const desired=b64(new TextEncoder().encode(workflow));
+const current=existing?.content?.replace(/\s/g,'');
+if(!existing || current!==desired){
+  log(existing?'Mevcut iş akışı güncelleniyor...':'İş akışı oluşturuluyor...');
+  await put(base,wfPath,desired,branch,token);changedWorkflow=true;
+}else{log('Mevcut iş akışı kullanılacak; silmen gerekmiyor.');}
+log('Android projesi yükleniyor...');
+const zipCommit=await put(base,'android-project.zip',b64(bytes),branch,token);changedZip=true;
+const expectedSha=zipCommit.commit?.sha;
+log('ZIP commit: '+(expectedSha||'bilinmiyor'));
+log('GitHub Actions çalışması bekleniyor (en fazla 4 dakika)...');
+let run=null;for(let i=0;i<48;i++){await sleep(5000);let runs=await api(base+'/actions/workflows/android-apk.yml/runs?per_page=30&branch='+encodeURIComponent(branch),'GET',null,token).catch(async e=>{if(e.status===404)return api(base+'/actions/runs?per_page=50&branch='+encodeURIComponent(branch),'GET',null,token);throw e});let found=runs.workflow_runs?.find(x=>x.path?.endsWith('/android-apk.yml')&&(!expectedSha||x.head_sha===expectedSha));if(!found){if(i%3===0)log('İlgili derleme henüz bulunamadı ('+(i+1)+'/48).');continue;}if(!run||run.id!==found.id){log('Derleme bulundu: #'+found.run_number+' (ID '+found.id+')');run=found}if(found.status!=='completed'){if(i%3===0)log('Durum: '+found.status);continue}completed=true;if(found.conclusion!=='success'){let jobs=await api(base+'/actions/runs/'+found.id+'/jobs?per_page=100','GET',null,token);for(const job of jobs.jobs||[]){log('İş: '+job.name+' — '+job.conclusion);for(const step of job.steps||[]){if(step.conclusion==='failure')log('BAŞARISIZ ADIM: '+step.name)} }log('Hata ayrıntıları için başarısız adımın tam günlüğü gerekir.');throw Error('Derleme başarısız: '+found.conclusion+'.');}log('Derleme başarılı! APK paketi aranıyor...');let arts=await api(base+'/actions/runs/'+found.id+'/artifacts','GET',null,token);let a=arts.artifacts?.find(x=>x.name==='Android-APK'&&!x.expired);if(!a)throw Error('Derleme tamamlandı ama APK paketi bulunamadı.');log('APK paketi indiriliyor...');let blob=await downloadArtifact(base,a.id,token);
+log('APK paketi tarayıcı belleğine Base64 olarak alınıyor...');
+if(blob.size>60*1024*1024)throw Error('APK ZIP 60 MB üstünde. Base64 bellek sınırı nedeniyle bu sürümde güvenle işlenemiyor.');
+let array=new Uint8Array(await blob.arrayBuffer());
+let encoded=b64(array);
+readyDataUrl='data:application/zip;base64,'+encoded;
+array=null;encoded=null;blob=null;
+buildOk=true;
+log('APK paketi belleğe alındı. Önce depo temizlenecek, sonra indirme açılacak.');return}throw Error('4 dakika içinde bu commit için derleme bulunamadı veya tamamlanmadı. Yeniden yüklemek yerine iş akışını kontrol et.')}catch(e){log('HATA: '+e.message) }finally{
+  if(completed&&branch){
+    log('Depo eski dosya düzenine geri getiriliyor...');
+    let errors=[];
+    if(changedZip){try{await restoreFile(base,'android-project.zip',previousZip,branch,token);log('ZIP dosyası geri alındı.')}catch(e){errors.push('ZIP: '+e.message);log('UYARI: ZIP geri alınamadı: '+e.message)}}
+    if(changedWorkflow){try{await restoreFile(base,'.github/workflows/android-apk.yml',previousWorkflow,branch,token);log('İş akışı geri alındı.')}catch(e){errors.push('İş akışı: '+e.message);log('UYARI: İş akışı geri alınamadı: '+e.message)}}
+    cleanupOk=errors.length===0;
+    if(cleanupOk)log('Depo dosyalarının temizliği tamamlandı. GitHub commit ve Actions geçmişi kalır.');
+    else log('Temizlik eksik! İndirme kilitli. Hataları giderip tekrar deneyin.');
+  }else{
+    log('Derleme tamamlanmadı. İşlem dosyaları silinmedi.');
+  }
+  if(buildOk&&cleanupOk&&readyDataUrl){
+    $('download').href=readyDataUrl;
+    $('download').classList.remove('hidden');
+    log('APK paketi hazır. Yeşil düğmeye basarak indir.');
+  }
+  $('token').value='';$('go').disabled=false;$('progress').classList.add('hidden')}};
+</script></body></html>
