@@ -21,21 +21,18 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Extract Android project
-        run: |
-          mkdir -p extracted
-          unzip -q android-project.zip -d extracted
-          find extracted -name settings.gradle -o -name settings.gradle.kts
+        run: unzip -q android-project.zip -d extracted
       - name: Build APK
         shell: bash
         run: |
           set -e
           SETTINGS=$(find extracted -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)
-          if [ -z "$SETTINGS" ]; then echo "ZIP içinde Android Gradle projesi bulunamadı"; exit 1; fi
+          if [ -z "$SETTINGS" ]; then echo "ZIP icinde Gradle projesi yok"; exit 1; fi
           cd "$(dirname "$SETTINGS")"
           if [ -f gradlew ]; then chmod +x gradlew; ./gradlew --no-daemon assembleDebug; else gradle --no-daemon assembleDebug; fi
       - name: Publish APK
         uses: actions/upload-artifact@v4
         with:
           name: Android-APK
-          path: extracted/**/build/outputs/apk/debug/*.apk
+          path: extracted/**/build/outputs/apk/**/*.apk
           if-no-files-found: error
