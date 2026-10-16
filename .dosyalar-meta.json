@@ -176,14 +176,6 @@
       "mime": "text/html",
       "movedAt": "2026-10-16T09:18:07.110Z"
     },
-    "Dosyalarim_XP_sutunlar_duzeltildi.html": {
-      "sha": "b7736e9e628a7fc0eb5a3761869885a73a09896c",
-      "uploadedAt": "2026-10-16T09:19:40.116Z",
-      "modifiedAt": "2026-10-16T09:19:40.116Z",
-      "addedAt": "2026-10-16T09:19:40.116Z",
-      "originalModified": "2026-10-16T09:19:32.025Z",
-      "mime": "text/html"
-    },
     "indexe.html": {
       "sha": "9bc9ce4a63b8bae3fa029531ef51a31f8f003eff",
       "uploadedAt": "2026-09-30T15:53:47.025Z",
@@ -192,6 +184,15 @@
       "originalModified": "2026-09-30T15:52:50.733Z",
       "mime": "text/html",
       "movedAt": "2026-10-16T09:25:26.436Z"
+    },
+    "index.html": {
+      "sha": "b7736e9e628a7fc0eb5a3761869885a73a09896c",
+      "uploadedAt": "2026-10-16T09:19:40.116Z",
+      "modifiedAt": "2026-10-16T09:26:04.736Z",
+      "addedAt": "2026-10-16T09:19:40.116Z",
+      "originalModified": "2026-10-16T09:19:32.025Z",
+      "mime": "text/html",
+      "movedAt": "2026-10-16T09:26:04.736Z"
     }
   },
   "folders": {
