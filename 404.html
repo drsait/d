@@ -25,7 +25,7 @@ body {
 let sayi = Number(sessionStorage.getItem("yenilemeSayisi") || 0);
 
 document.getElementById("sayac").textContent =
-  sayi + " sayfa bulunamadı.(404)";
+  "Sayfa bulunamadı." + sayi + ". deneme";
 
 if (location.pathname.startsWith("/d/url/")) {
   sessionStorage.setItem(
