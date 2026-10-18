@@ -116,14 +116,6 @@
       "mime": "text/html",
       "movedAt": "2026-10-13T06:48:07.807Z"
     },
-    "apk/dosyalar.apk": {
-      "sha": "dee5e9927824264b35b3b54f5cab2450909e43b4",
-      "uploadedAt": "2026-10-16T07:30:53.370Z",
-      "modifiedAt": "2026-10-16T07:30:53.370Z",
-      "addedAt": "2026-10-16T07:30:53.370Z",
-      "originalModified": "2026-10-16T04:28:28.000Z",
-      "mime": "application/vnd.android.package-archive"
-    },
     "iP_NO_TARAYICI_BiLGiLERi.html": {
       "sha": "fcdd94dde8d26d0417802c818e077706bfed73b4",
       "uploadedAt": "2026-10-16T08:58:06.561Z",
@@ -132,15 +124,6 @@
       "originalModified": "2026-10-16T08:58:03.621Z",
       "mime": "text/html",
       "movedAt": "2026-10-16T09:01:41.187Z"
-    },
-    "apk/APK YARAT.html": {
-      "sha": "d1ea03917b72285042e8967d1b0b3a85e453400c",
-      "uploadedAt": "2026-10-16T11:32:29.283Z",
-      "modifiedAt": "2026-10-16T11:44:09.922Z",
-      "addedAt": "2026-10-16T11:32:29.283Z",
-      "originalModified": "2026-10-16T11:32:23.279Z",
-      "mime": "text/html",
-      "movedAt": "2026-10-16T11:44:44.103Z"
     },
     "arşiv/1.png": {
       "sha": "2907196e49ac330a62e34ce93a3956014fbaf347",
@@ -193,6 +176,24 @@
       "addedAt": "2026-10-16T23:55:50.363Z",
       "originalModified": "2026-10-16T23:54:13.959Z",
       "mime": "application/octet-stream"
+    },
+    "arşiv/apk/dosyalar.apk": {
+      "sha": "dee5e9927824264b35b3b54f5cab2450909e43b4",
+      "uploadedAt": "2026-10-16T07:30:53.370Z",
+      "modifiedAt": "2026-10-16T07:30:53.370Z",
+      "addedAt": "2026-10-16T07:30:53.370Z",
+      "originalModified": "2026-10-16T04:28:28.000Z",
+      "mime": "application/vnd.android.package-archive",
+      "movedAt": "2026-10-18T17:19:09.046Z"
+    },
+    "arşiv/apk/APK YARAT.html": {
+      "sha": "d1ea03917b72285042e8967d1b0b3a85e453400c",
+      "uploadedAt": "2026-10-16T11:32:29.283Z",
+      "modifiedAt": "2026-10-16T11:44:09.922Z",
+      "addedAt": "2026-10-16T11:32:29.283Z",
+      "originalModified": "2026-10-16T11:32:23.279Z",
+      "mime": "text/html",
+      "movedAt": "2026-10-18T17:19:09.046Z"
     }
   },
   "folders": {
@@ -201,10 +202,11 @@
       "addedAt": "2026-10-02T12:01:45.126Z",
       "uploadedAt": "2026-10-02T12:01:45.126Z"
     },
-    "apk": {
+    "arşiv/apk": {
       "createdAt": "2026-10-16T06:40:49.463Z",
       "addedAt": "2026-10-16T06:40:49.463Z",
-      "uploadedAt": "2026-10-16T06:40:49.463Z"
+      "uploadedAt": "2026-10-16T06:40:49.463Z",
+      "movedAt": "2026-10-18T17:19:09.046Z"
     }
   }
 }
