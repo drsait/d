@@ -191,6 +191,11 @@
       "originalModified": "2026-10-01T21:27:31.470Z",
       "mime": "application/x-compressed",
       "movedAt": "2026-10-20T05:39:28.284Z"
+    },
+    "arşiv/Siramatik.exe": {
+      "historyPath": "Siramatik.exe",
+      "historyHead": "2ec0e167c3671ad7ccec43d9b0085e8836388a3b",
+      "movedAt": "2026-10-20T05:39:49.250Z"
     }
   },
   "folders": {
