@@ -125,15 +125,6 @@
       "mime": "image/png",
       "movedAt": "2026-10-16T11:56:37.029Z"
     },
-    "index.htmlA": {
-      "sha": "b7736e9e628a7fc0eb5a3761869885a73a09896c",
-      "uploadedAt": "2026-10-16T09:19:40.116Z",
-      "modifiedAt": "2026-10-16T11:57:48.682Z",
-      "addedAt": "2026-10-16T09:19:40.116Z",
-      "originalModified": "2026-10-16T09:19:32.025Z",
-      "mime": "text/html",
-      "movedAt": "2026-10-16T11:57:48.682Z"
-    },
     "index.html": {
       "sha": "6fbf4b1eca2f2fe32fa5d2256cc9106150167bfc",
       "uploadedAt": "2026-10-16T11:55:07.818Z",
