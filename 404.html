@@ -1,9 +1,9 @@
-
 <!doctype html>
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<title>Sayfa Bulunamadı</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deneme yapılıyor</title>
 <style>
 body {
   margin: 0;
@@ -29,11 +29,13 @@ body {
 <div id="sayac"></div>
 
 <script>
-let sayi = Number(sessionStorage.getItem("yenilemeSayisi") || 0);
-document.getElementById("sayac").textContent = sayi + ". deneme";
+let sayi = Number(sessionStorage.getItem("yenilemeSayisi") || 0) + 1;
+sessionStorage.setItem("yenilemeSayisi", sayi);
+
+document.title = sayi + ". deneme yapılıyor";
+document.getElementById("sayac").textContent = sayi + ". deneme yapılıyor";
 
 setTimeout(() => {
-  sessionStorage.setItem("yenilemeSayisi", sayi + 1);
   location.reload();
 }, 1000);
 </script>
