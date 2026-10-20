@@ -1,11 +1,6 @@
 {
   "version": 1,
   "items": {
-    "altin doviz.html": {
-      "historyPath": "altin doviz.html",
-      "historyHead": "fec8ab176dff5a933dc9d94c5ade914e0806956c",
-      "movedAt": "2026-09-30T08:48:44.040Z"
-    },
     "arşiv/InternetHiziMini (1).exe": {
       "sha": "2efc7e4ab826a075a26b8a38aabf1406b1d1af26",
       "uploadedAt": "2026-10-02T12:01:45.126Z",
@@ -217,6 +212,11 @@
       "historyPath": "uzay saati.html",
       "historyHead": "d99e3be9b78441e36e6b455d70c0916b7cd91ac0",
       "movedAt": "2026-10-20T05:41:55.010Z"
+    },
+    "arşiv/altin doviz.html": {
+      "historyPath": "altin doviz.html",
+      "historyHead": "fec8ab176dff5a933dc9d94c5ade914e0806956c",
+      "movedAt": "2026-10-20T05:44:29.514Z"
     }
   },
   "folders": {
