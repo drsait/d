@@ -249,6 +249,14 @@
       "originalModified": "2026-10-22T20:46:15.000Z",
       "mime": "text/html",
       "movedAt": "2026-10-22T20:48:45.251Z"
+    },
+    "arşiv/WinDirStat.exe": {
+      "sha": "55a3f0dcf8cc78a10321e7c4dd0a1bbb2eac2b77",
+      "uploadedAt": "2026-10-24T05:18:22.220Z",
+      "modifiedAt": "2026-10-24T05:18:22.220Z",
+      "addedAt": "2026-10-24T05:18:22.220Z",
+      "originalModified": "2025-01-17T15:11:14.000Z",
+      "mime": "application/octet-stream"
     }
   },
   "folders": {
