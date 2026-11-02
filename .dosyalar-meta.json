@@ -257,6 +257,14 @@
       "addedAt": "2026-10-24T05:18:22.220Z",
       "originalModified": "2025-01-17T15:11:14.000Z",
       "mime": "application/octet-stream"
+    },
+    "arşiv/DriverPilot.exe": {
+      "sha": "ad94d64c2e59697968e472fb31301e2c08aba8fb",
+      "uploadedAt": "2026-11-02T05:29:23.243Z",
+      "modifiedAt": "2026-11-02T05:29:23.243Z",
+      "addedAt": "2026-11-02T05:29:23.243Z",
+      "originalModified": "2026-11-02T05:28:49.693Z",
+      "mime": "application/x-msdownload"
     }
   },
   "folders": {
