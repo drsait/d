@@ -250,13 +250,14 @@
       "originalModified": "2025-01-17T15:11:14.000Z",
       "mime": "application/octet-stream"
     },
-    "arşiv/DriverPilot.exe": {
+    "arşiv/DriverYukleGuncelle.exe": {
       "sha": "ad94d64c2e59697968e472fb31301e2c08aba8fb",
       "uploadedAt": "2026-11-02T05:29:23.243Z",
       "modifiedAt": "2026-11-02T05:29:23.243Z",
       "addedAt": "2026-11-02T05:29:23.243Z",
       "originalModified": "2026-11-02T05:28:49.693Z",
-      "mime": "application/x-msdownload"
+      "mime": "application/x-msdownload",
+      "movedAt": "2026-11-02T05:30:30.572Z"
     }
   },
   "folders": {
