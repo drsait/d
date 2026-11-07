@@ -267,6 +267,14 @@
       "originalModified": "2026-10-28T11:44:25.217Z",
       "mime": "application/octet-stream",
       "movedAt": "2026-11-02T14:24:00.829Z"
+    },
+    "arşiv/otomatik tıklama.exe": {
+      "sha": "79d6563b30cd2920006bc2b90ab281d3a3766b7a",
+      "uploadedAt": "2026-11-07T16:48:29.116Z",
+      "modifiedAt": "2026-11-07T16:48:29.116Z",
+      "addedAt": "2026-11-07T16:48:29.116Z",
+      "originalModified": "2026-11-07T16:44:46.100Z",
+      "mime": "application/x-msdownload"
     }
   },
   "folders": {
