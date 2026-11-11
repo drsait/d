@@ -259,15 +259,6 @@
       "mime": "application/x-msdownload",
       "movedAt": "2026-11-02T05:30:30.572Z"
     },
-    "arşiv/SesArttirici.exe": {
-      "sha": "c56e63f3ca0516d2ecc42772742ff8ff643aa007",
-      "uploadedAt": "2026-11-02T14:23:45.912Z",
-      "modifiedAt": "2026-11-02T14:23:45.912Z",
-      "addedAt": "2026-11-02T14:23:45.912Z",
-      "originalModified": "2026-10-28T11:44:25.217Z",
-      "mime": "application/octet-stream",
-      "movedAt": "2026-11-02T14:24:00.829Z"
-    },
     "arşiv/otomatik tıklama.exe": {
       "sha": "79d6563b30cd2920006bc2b90ab281d3a3766b7a",
       "uploadedAt": "2026-11-07T16:48:29.116Z",
