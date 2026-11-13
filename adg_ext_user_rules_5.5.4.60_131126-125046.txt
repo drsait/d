@@ -1,0 +1,19 @@
+
+enabiz.gov.tr##div.d-none.d-sm-block:nth-child(8) > div.iletisimMerkeziContent
+trendyol.com###ss-home-page
+trendyol.com##main:nth-child(3) > footer:last-child
+trendyol.com###sidebar-basket > div.sidebar-basket-wrapper:nth-child(4) > div.side-bar-basket-body.side-bar-basket-body-medium
+trendyol.com##footer:nth-child(4)
+x.com##div.pointer-events-auto.fixed.inset-0.z-50.flex.items-center.justify-center:last-child > div.bg-modal-background.relative.z-10.flex.h-dvh.w-full.max-w-\[600px\].flex-col.items-center.justify-center.rounded-none.px-6.py-12.sm\:h-auto.sm\:justify-start.sm\:rounded-md.sm\:px-20:last-child
+x.com##div.pointer-events-auto.fixed.inset-0.z-50.flex.items-center.justify-center:last-child > div.absolute.inset-0.z-0.cursor-default.bg-black\/40.backdrop-blur-sm:first-child
+x.com##button.border-normal.shadow-popup.bg-modal.motion-safe\:animate-enter-fade-rise.motion-reduce\:animate-enter-fade.fixed.inset-e-\[3vw\].bottom-\[3vw\].z-1000.flex.origin-bottom-right.cursor-pointer.flex-col.items-center.gap-2.rounded.border.p-4.outline-hidden.transition-transform.duration-200.ease-out.focus-visible\:ring-2.focus-visible\:ring-gray-700.motion-safe\:hover\:scale-\[1\.08\].motion-safe\:focus-visible\:scale-\[1\.08\].rtl\:origin-bottom-left:nth-child(2) > img.two-col\:size-\[112px\].nav-xxl\:size-\[144px\].size-\[96px\].dark\:invert:last-child
+x.com##div.pointer-events-auto.fixed.inset-0.z-50.flex.items-center.justify-center:nth-child(9)
+x.com##div.pointer-events-auto.fixed.inset-0.z-50.flex.items-center.justify-center:last-child
+x.com##div.flex.min-h-dvh.w-full.items-start.mid\:justify-center:first-child > div.flex.min-w-0.grow.items-start.mid\:max-w-\(--layout-width-two-column\):last-child > main.border-normal.min-w-0.narrow\:min-w-\(--layout-min-primary\).narrow\:border-x.flex.min-h-dvh.flex-col.mid\:w-\(--layout-width-primary\).mid\:max-w-\(--layout-width-primary\).mid\:shrink-0.w-full:first-child > aside.fixed.bottom-0.isolate.z-40.flex.w-full.min-w-0.flex-col.gap-4.px-6.pt-3:last-child
+retroonline.net###dosWindowLoading
+https://hyp.saglik.gov.tr/api/Utility/$log-telemetry
+mail.yandex.ru##.undefined
+mail.yandex.ru###js-mail-layout > div.PageLayout-m__body--xjMc4:last-child > div.pXVO6GaoxkLoaISSGqUe7.pZUnwAr0AkLonKTj5tEGoMIA:last-child
+mail.yandex.ru###js-mail-layout > div.PageLayout-m__body--xjMc4:last-child > div.pXVO6GaoxkLoaISSGqUe7.pZUnwAr0AkLonKTj5tEGoMIA:last-child
+mail.yandex.ru###js-mail-layout-content-header-v1 > div.pS1OvFL0Gs78lKQ-portal:nth-child(3)
+mail.yandex.ru##.pS1OvFL0Gs78lKQ-portal
