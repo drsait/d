@@ -322,6 +322,14 @@
       "addedAt": "2026-11-20T14:35:19.147Z",
       "originalModified": "2026-11-20T14:35:11.000Z",
       "mime": "text/plain"
+    },
+    "app-debug.apk": {
+      "sha": "5146a8ae5d2023523b656a4765850801c76e3bf8",
+      "uploadedAt": "2026-11-22T21:38:14.593Z",
+      "modifiedAt": "2026-11-22T21:38:14.593Z",
+      "addedAt": "2026-11-22T21:38:14.593Z",
+      "originalModified": "2026-11-22T18:25:36.000Z",
+      "mime": "application/vnd.android.package-archive"
     }
   },
   "folders": {
