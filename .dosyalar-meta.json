@@ -315,6 +315,14 @@
       "addedAt": "2026-11-23T06:58:57.325Z",
       "originalModified": "2026-11-23T06:57:17.157Z",
       "mime": "text/plain"
+    },
+    "arşiv/app-debug.apk": {
+      "sha": "94ae6878d068f93cc023dc867b5981d22041726f",
+      "uploadedAt": "2026-11-23T16:35:32.850Z",
+      "modifiedAt": "2026-11-23T16:35:32.850Z",
+      "addedAt": "2026-11-23T16:35:32.850Z",
+      "originalModified": "2026-11-23T13:24:38.000Z",
+      "mime": "application/vnd.android.package-archive"
     }
   },
   "folders": {
