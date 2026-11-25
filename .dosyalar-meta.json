@@ -348,6 +348,14 @@
       "addedAt": "2026-11-25T15:09:45.523Z",
       "originalModified": "2026-11-25T15:09:24.774Z",
       "mime": "text/html"
+    },
+    "arşiv/apk/mini.androidauto.apk": {
+      "sha": "6400b7f22c3f29e21d40d479e361d3cb391a1380",
+      "uploadedAt": "2026-11-25T15:19:04.814Z",
+      "modifiedAt": "2026-11-25T15:19:04.814Z",
+      "addedAt": "2026-11-25T15:19:04.814Z",
+      "originalModified": "2026-11-25T12:12:16.000Z",
+      "mime": "application/vnd.android.package-archive"
     }
   },
   "folders": {
