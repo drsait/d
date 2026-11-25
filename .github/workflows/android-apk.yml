@@ -1,0 +1,112 @@
+name: Android APK Builder
+run-name: 'APK Derleme ${{ inputs.request_id }}'
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: 'Tekil derleme kimliği'
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Android SDK 35 bileşenlerini kur
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Projeyi aç ve incele
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p extracted diagnostics
+          unzip -q android-project.zip -d extracted
+          SETTINGS=$(find extracted -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)
+          if [ -z "$SETTINGS" ]; then echo '::error title=Android proje bulunamadı::ZIP içinde settings.gradle veya settings.gradle.kts yok'; exit 1; fi
+          ROOT=$(dirname "$SETTINGS")
+          echo "$ROOT" > diagnostics/project-root.txt
+          echo "GitHub Run: $GITHUB_RUN_ID" > diagnostics/environment.txt
+          echo "Commit: $GITHUB_SHA" >> diagnostics/environment.txt
+          echo "Project root: $ROOT" >> diagnostics/environment.txt
+          java -version 2>> diagnostics/environment.txt || true
+          gradle --version >> diagnostics/environment.txt 2>&1 || true
+      - name: APK derle — tam hata günlüğü
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p diagnostics
+          if [ ! -f diagnostics/project-root.txt ]; then echo '::error title=Proje bulunamadı::Önceki adım tamamlanmadı'; exit 1; fi
+          ROOT=$(cat diagnostics/project-root.txt)
+          (
+            cd "$ROOT" || exit 1
+            if [ -f gradlew ] && [ -f gradle/wrapper/gradle-wrapper.jar ]; then
+              chmod +x gradlew
+              ./gradlew --no-daemon --stacktrace --info --console=plain assembleDebug
+            else
+              gradle --no-daemon --stacktrace --info --console=plain assembleDebug
+            fi
+          ) 2>&1 | tee diagnostics/build.log
+          RESULT=${PIPESTATUS[0]}
+          echo "$RESULT" > diagnostics/exit-code.txt
+          if [ "$RESULT" -ne 0 ]; then
+            echo "::error title=Gradle derleme hatası::APK derlemesi çıkış kodu $RESULT ile başarısız oldu"
+            # Kritik hata satırlarını GitHub anotasyonlarına taşı;
+            # böylece job logu CORS engeline takılsa bile API'den okunabilir.
+            grep -Ei 'FAILURE:|What went wrong|Execution failed|Caused by:|error:|Could not resolve|Could not find|manifest merger failed|AAPT|Unresolved reference|cannot find symbol|SDK location|No matching variant' diagnostics/build.log               | tail -n 12               | while IFS= read -r line; do
+                  line=$(printf '%s' "$line" | sed 's/%/%25/g')
+                  echo "::error title=Gradle hata ayrıntısı::$line"
+                done
+          fi
+          exit "$RESULT"
+      - name: Tanı raporunu derle
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p diagnostics
+          {
+            echo "Run: $GITHUB_RUN_ID"
+            echo "Commit: $GITHUB_SHA"
+            echo "Repo: $GITHUB_REPOSITORY"
+            echo "Job: $GITHUB_JOB"
+          } > diagnostics/run-metadata.txt
+          if [ -f diagnostics/build.log ]; then
+            grep -Ein 'FAILURE:|What went wrong|Execution failed|Caused by:|error:|Exception|Could not (resolve|find)|failed|AAPT|manifest merger|SDK location|compileSdk' diagnostics/build.log > diagnostics/highlights.txt || true
+          else
+            echo 'Derleme başlamadan önce hata oluştu; GitHub Actions adım günlüklerine bakın.' > diagnostics/highlights.txt
+          fi
+          {
+            echo '### Android APK derleme tanısı'
+            echo "Run: $GITHUB_RUN_ID"
+            echo '~~~text'
+            head -c 14000 diagnostics/highlights.txt || true
+            echo
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Tanı dosyalarını sakla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-Build-Diagnostics
+          path: diagnostics/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: APK dosyalarını sakla
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-APK
+          path: extracted/**/build/outputs/apk/**/*.apk
+          if-no-files-found: error
