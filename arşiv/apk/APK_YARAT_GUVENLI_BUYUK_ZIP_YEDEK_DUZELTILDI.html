@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>APK Oluşturucu — Ayrıntılı Hata Raporu</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#162238;--stroke:#394e6b;--text:#edf5ff;--muted:#b8cbe0;--blue:#81c3ff;--red:#ff909d;--green:#6de1b0}
+*{box-sizing:border-box}body{background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:0;padding:14px}
+main{max-width:850px;margin:0 auto;padding:clamp(16px,4vw,28px);border:1px solid var(--stroke);border-radius:18px;background:var(--panel)}h1{font-size:23px;margin:0 0 6px}h2{font-size:18px;margin:25px 0 6px}p,small{color:var(--muted)}p{margin:8px 0 15px}label{display:block;font-weight:650;margin:13px 0 6px}input{width:100%;font:inherit;color:#fff;background:#0c1729;border:1px solid #536b89;border-radius:10px;padding:11px}input[type=file]{padding:10px}button,.download{border:0;border-radius:10px;padding:12px 14px;font:inherit;font-weight:700;cursor:pointer;background:var(--blue);color:#08213b;text-align:center;text-decoration:none}button:disabled{opacity:.5;cursor:wait}.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.buttons>*{flex:1 1 180px}.secondary{background:#273f5a;color:#e6f3ff;border:1px solid #60799a}.success{background:var(--green);color:#082a22}.warn{color:var(--red)}pre{background:#0a1323;border:1px solid #2c425e;border-radius:11px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:450px;overflow-y:auto;font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}a{color:#9fd4ff}.hidden{display:none!important}progress{width:100%;margin-top:15px}#runLink{display:inline-block;margin:8px 0}#summary{border-left:3px solid var(--blue);padding:6px 12px;background:#101d31;border-radius:5px}#errors{border-color:#b85664;max-height:500px}details{margin:12px 0}summary{cursor:pointer;font-weight:650}footer{font-size:12px;border-top:1px solid #3a4b64;margin-top:28px;padding-top:10px;color:var(--muted)}.pill{font-size:12px;color:#bde5ff}.row{display:flex;gap:10px;flex-wrap:wrap}.row>div{flex:1 1 220px}
+</style>
+</head><body><main>
+<h1>📱 APK Oluşturucu <span class="pill">· Ayrıntılı GitHub hata raporu</span></h1>
+<p>Önceki uygulamanın ZIP yükleme, GitHub Actions derleme, depo geri yükleme ve APK indirme akışı korunmuştur. Başarısızlıkta hata ayrıntıları, iş adımları ve erişilebilir tam günlükler gösterilir.</p>
+<form id="credentials" autocomplete="on">
+ <div class="row"><div><label for="owner">GitHub kullanıcı adı</label><input id="owner" name="username" autocomplete="username" value="drsait" required></div><div><label for="repo">Depo</label><input id="repo" value="d" required></div></div>
+ <label for="token">GitHub erişim anahtarı (PAT)</label><input id="token" name="password" autocomplete="current-password" type="password" spellcheck="false" placeholder="Erişim anahtarını gir veya şifre yöneticisinden seç" required>
+ <small>Yalnızca GitHub API isteğinde kullanılır; raporlara, indirmelere veya yerel depolamaya eklenmez. Klasik PAT için repo ve workflow izinleri; fine-grained PAT için Contents, Actions ve Workflows yazma/okuma izinleri gerekebilir. Bu HTML'yi yalnızca güvendiğin ortamda aç.</small>
+ <label for="file">Android projesi (.zip)</label><input type="file" id="file" accept=".zip,application/zip">
+ <div class="buttons"><button id="go" type="submit">🚀 APK OLUŞTUR VE RAPORLA</button><button class="secondary" id="inspect" type="button">🔎 Önceki/Son derleme hatasını getir</button></div>
+ <label for="runid">İsteğe bağlı GitHub Actions çalışma ID'si</label><input id="runid" inputmode="numeric" placeholder="Boşsa en son çalışma incelenir">
+</form>
+<progress id="progress" class="hidden"></progress>
+<h2>İşlem durumu</h2><div id="summary">Hazır. Android proje ZIP'i seçerek derleyebilir veya yalnızca önceki hatayı inceleyebilirsin.</div><a id="runLink" class="hidden" rel="noopener noreferrer" target="_blank">GitHub'daki çalışmayı aç</a><pre id="status">Hazır.</pre>
+<a id="download" class="download success hidden" download="Android-APK.zip">📦 APK paketini indir</a>
+<h2>🔴 Tespit edilen hatalar ve bağlam</h2><pre id="errors">Henüz hata raporu yok.</pre>
+<div class="buttons"><button class="secondary" id="copyErrors" type="button">📋 Hataları kopyala</button><button class="secondary" id="copyAll" type="button">📋 Tüm raporu kopyala</button><button class="secondary" id="saveTxt" type="button">⬇️ Raporu TXT indir</button><button class="secondary" id="saveJson" type="button">⬇️ Raporu JSON indir</button></div>
+<details><summary>Tüm erişilebilir ham GitHub kayıtlarını göster</summary><pre id="raw">Henüz kayıt yok.</pre></details>
+<footer>
+GitHub Actions günlüklerinin tarayıcı üzerinden indirilmesi, GitHub yönlendirme/CORS ve yetkilendirme kısıtları nedeniyle engellenebilir. Bu durumda iş/step sonuçları ve erişilebilen check-run açıklamaları kaydedilir; tam günlük için GitHub bağlantısı sunulur. Hiçbir araç tüm olası GitHub hatalarını kesin olarak tespit edemez; rapor erişilebilen kanıtlara dayanır. Başarılı derlemede APK artifact ZIP olarak alınır; erişim engellenirse GitHub'dan manuel indirilir. Bir derleme hâlâ sürüyorsa geçici dosyalar korunur. Tamamlanan derlemelerde önceki dosyalar geri yüklenir; commit ve Actions geçmişi kalır.
+</footer>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+const utc = () => new Date().toISOString();
+const WORKFLOW_PATH = '.github/workflows/android-apk.yml';
+let PAT = '', report = {}, downloadUrl = null, working = false;
+const workflow = `name: Android APK Builder
+run-name: 'APK Derleme \${{ inputs.request_id }}'
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: 'Tekil derleme kimliği'
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Android SDK 35 bileşenlerini kur
+        shell: bash
+        run: |
+          SDK="\${ANDROID_HOME:-\${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "SDK=$SDK"
+          SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER=$(find "$SDK/cmdline-tools" -type f -name sdkmanager -print -quit || true)
+          fi
+          if [ -z "$SDKMANAGER" ] || [ ! -x "$SDKMANAGER" ]; then
+            echo '::error title=Android SDK eksik::sdkmanager bulunamadı'
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --sdk_root="$SDK" --licenses > /dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK" "platforms;android-35" "build-tools;35.0.0"
+      - name: Projeyi aç ve incele
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p extracted diagnostics
+          unzip -q android-project.zip -d extracted
+          SETTINGS=$(find extracted -type f \\( -name settings.gradle -o -name settings.gradle.kts \\) -print -quit)
+          if [ -z "$SETTINGS" ]; then echo '::error title=Android proje bulunamadı::ZIP içinde settings.gradle veya settings.gradle.kts yok'; exit 1; fi
+          ROOT=$(dirname "$SETTINGS")
+          echo "$ROOT" > diagnostics/project-root.txt
+          echo "GitHub Run: $GITHUB_RUN_ID" > diagnostics/environment.txt
+          echo "Commit: $GITHUB_SHA" >> diagnostics/environment.txt
+          echo "Project root: $ROOT" >> diagnostics/environment.txt
+          java -version 2>> diagnostics/environment.txt || true
+          gradle --version >> diagnostics/environment.txt 2>&1 || true
+      - name: APK derle — tam hata günlüğü
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p diagnostics
+          if [ ! -f diagnostics/project-root.txt ]; then echo '::error title=Proje bulunamadı::Önceki adım tamamlanmadı'; exit 1; fi
+          ROOT=$(cat diagnostics/project-root.txt)
+          (
+            cd "$ROOT" || exit 1
+            if [ -f gradlew ] && [ -f gradle/wrapper/gradle-wrapper.jar ]; then
+              chmod +x gradlew
+              ./gradlew --no-daemon --stacktrace --info --console=plain assembleDebug
+            else
+              gradle --no-daemon --stacktrace --info --console=plain assembleDebug
+            fi
+          ) 2>&1 | tee diagnostics/build.log
+          RESULT=\${PIPESTATUS[0]}
+          echo "$RESULT" > diagnostics/exit-code.txt
+          if [ "$RESULT" -ne 0 ]; then
+            echo "::error title=Gradle derleme hatası::APK derlemesi çıkış kodu $RESULT ile başarısız oldu"
+            # Kritik hata satırlarını GitHub anotasyonlarına taşı;
+            # böylece job logu CORS engeline takılsa bile API'den okunabilir.
+            grep -Ei 'FAILURE:|What went wrong|Execution failed|Caused by:|error:|Could not resolve|Could not find|manifest merger failed|AAPT|Unresolved reference|cannot find symbol|SDK location|No matching variant' diagnostics/build.log \
+              | tail -n 12 \
+              | while IFS= read -r line; do
+                  line=$(printf '%s' "$line" | sed 's/%/%25/g')
+                  echo "::error title=Gradle hata ayrıntısı::$line"
+                done
+          fi
+          exit "$RESULT"
+      - name: Tanı raporunu derle
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p diagnostics
+          {
+            echo "Run: $GITHUB_RUN_ID"
+            echo "Commit: $GITHUB_SHA"
+            echo "Repo: $GITHUB_REPOSITORY"
+            echo "Job: $GITHUB_JOB"
+          } > diagnostics/run-metadata.txt
+          if [ -f diagnostics/build.log ]; then
+            grep -Ein 'FAILURE:|What went wrong|Execution failed|Caused by:|error:|Exception|Could not (resolve|find)|failed|AAPT|manifest merger|SDK location|compileSdk' diagnostics/build.log > diagnostics/highlights.txt || true
+          else
+            echo 'Derleme başlamadan önce hata oluştu; GitHub Actions adım günlüklerine bakın.' > diagnostics/highlights.txt
+          fi
+          {
+            echo '### Android APK derleme tanısı'
+            echo "Run: $GITHUB_RUN_ID"
+            echo '~~~text'
+            head -c 14000 diagnostics/highlights.txt || true
+            echo
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Tanı dosyalarını sakla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-Build-Diagnostics
+          path: diagnostics/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: APK dosyalarını sakla
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-APK
+          path: extracted/**/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+`;
+// The workflow template uses escaped ${ in JavaScript so GitHub expressions and bash expansions survive unchanged.
+function redact(value) {
+  let s = String(value ?? '');
+  if (PAT) s = s.split(PAT).join('[GİZLİ PAT]');
+  return s.replace(/(github_pat_[A-Za-z0-9_]{15,}|gh[pousr]_[A-Za-z0-9_]{15,})/g, '[GİZLİ ANAHTAR]')
+    .replace(/(Bearer\s+)[A-Za-z0-9_.\-]+/gi,'$1[GİZLİ]');
+}
+function log(s) { const line = `[${new Date().toLocaleTimeString('tr-TR')}] ${redact(s)}`; report.events.push(line); $('status').textContent += '\n' + line; $('status').scrollTop = $('status').scrollHeight; }
+function summary(s) { $('summary').textContent = s; }
+function setBusy(on) { working = on; $('go').disabled = on; $('inspect').disabled = on; $('progress').classList.toggle('hidden',!on); }
+function clearReport(kind) {
+  report = {generated_at:utc(),mode:kind,repository:'',branch:'',run_id:null,run_url:'',head_sha:'',conclusion:'',jobs:[],annotations:[],log_access:[],errors:[],raw_logs:[],events:[],artifacts:[],cleanup:[],request_id:''};
+  $('status').textContent='Başlatıldı.'; $('errors').textContent='Hata araştırması henüz tamamlanmadı.'; $('raw').textContent='Henüz kayıt yok.';
+  $('runLink').classList.add('hidden'); $('download').classList.add('hidden'); if(downloadUrl)URL.revokeObjectURL(downloadUrl); downloadUrl=null;
+}
+function linkRun(owner,repo,id) {const url=`https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/runs/${id}`;report.run_url=url; const a=$('runLink');a.href=url;a.classList.remove('hidden');}
+function diagnosticsText() {
+  return ['GITHUB APK DERLEME RAPORU',`Tarih: ${report.generated_at}`,`Depo: ${report.repository}`,`Dal: ${report.branch}`,`Run ID: ${report.run_id||'belirsiz'}`,`GitHub: ${report.run_url||'-'}`,`SHA: ${report.head_sha||'-'}`,`Sonuç: ${report.conclusion||'-'}`,
+  '\n--- HATALAR / KODLAR / BAĞLAM ---',...(report.errors.length?report.errors:['Hata satırı elde edilemedi.']),
+  '\n--- İŞLER / ADIMLAR ---',...report.jobs.map(j=>JSON.stringify(j,null,2)),
+  '\n--- CHECK RUN ANNOTATIONS ---',...report.annotations.map(x=>JSON.stringify(x,null,2)),
+  '\n--- API / GÜNLÜK ERİŞİM NOTLARI ---',...report.log_access,
+  '\n--- HAM GÜNLÜKLER ---',...report.raw_logs.map(x=>`[JOB ${x.job} / ${x.source}]\n${x.content}`),
+  '\n--- İŞLEM AKIŞI ---',...report.events,'\n--- DOSYA TEMİZLİĞİ ---',...report.cleanup].join('\n');
+}
+function showReport(){ $('errors').textContent = report.errors.join('\n\n') || 'Bu çalışmada erişilebilir hata satırı bulunamadı. İş günlükleri erişime kapalı olabilir; GitHub bağlantısını aç.';
+  $('raw').textContent = report.raw_logs.map(x=>`=== ${x.job} / ${x.source} ===\n${x.content}`).join('\n\n') || 'Tam günlük metni tarayıcı tarafından alınamadı. GitHub Actions bağlantısından açabilirsin.';
+}
+async function copyText(s){try{await navigator.clipboard.writeText(s);summary('✅ Rapor panoya kopyalandı.')}catch(e){let t=document.createElement('textarea');t.value=s;document.body.appendChild(t);t.select();let ok=document.execCommand('copy');t.remove();if(ok)summary('✅ Rapor panoya kopyalandı.');else alert('Tarayıcı pano erişimini engelledi. TXT olarak indir.');}}
+function save(text,filename,mime='text/plain;charset=utf-8'){let url=URL.createObjectURL(new Blob([text],{type:mime}));let a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+$('copyErrors').onclick=()=>copyText(`Depo: ${report.repository}\nGitHub: ${report.run_url}\n\n${report.errors.join('\n\n')||'Erişilebilir hata yok.'}`);
+$('copyAll').onclick=()=>copyText(diagnosticsText());
+$('saveTxt').onclick=()=>save(diagnosticsText(),'APK-GitHub-Hata-Raporu.txt');
+$('saveJson').onclick=()=>save(JSON.stringify(report,null,2),'APK-GitHub-Hata-Raporu.json','application/json');
+function apiError(method,path,status,detail,headers){let e=new Error(`${method} ${path} → HTTP ${status}: ${detail||'Bilinmeyen hata'}`);e.status=status;e.url=path;e.request_id=headers?.get('x-github-request-id')||'';e.rate_remaining=headers?.get('x-ratelimit-remaining')||'';return e;}
+async function api(path,method='GET',data){
+  const url='https://api.github.com'+path; let response;
+  try{response=await fetch(url,{method,headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+PAT,'X-GitHub-Api-Version':'2022-11-28',...(data!==undefined?{'Content-Type':'application/json'}:{})},body:data!==undefined?JSON.stringify(data):undefined,cache:'no-store'});}
+  catch(err){throw new Error(`GitHub isteği başarısız (${method} ${path}): ${err.message}. Ağ bağlantısı veya CORS kontrol edilmeli.`)}
+  const raw=await response.text(),j=raw?(()=>{try{return JSON.parse(raw)}catch{return {message:raw.slice(0,600)}}})():{};
+  if(!response.ok){let err=apiError(method,path,response.status,j.message||response.statusText,response.headers);if(j.errors)err.message+=' / '+JSON.stringify(j.errors);if(err.request_id)err.message+=` / Request ID ${err.request_id}`;throw err;}
+  return j;
+}
+function baseFor(owner,repo){return '/repos/'+encodeURIComponent(owner)+'/'+encodeURIComponent(repo)}
+function encPath(p){return p.split('/').map(encodeURIComponent).join('/')}
+async function getFile(base,path,branch){try{return await api(`${base}/contents/${encPath(path)}?ref=${encodeURIComponent(branch)}`)}catch(e){if(e.status===404)return null;throw e}}
+// GitHub Contents API, 1 MB üzerindeki dosyaların içeriğini döndürmeyebilir.
+// Dosyanın Git SHA'sını kullanarak Git Blobs API'den orijinal baytları al;
+// böylece daha önce yüklenmiş ZIP'lerin üzerine güvenle yazılabilir.
+async function backupFile(base,path,branch){
+  const previous=await getFile(base,path,branch);
+  if(!previous)return null;
+  if(previous.type!=='file'||!previous.sha)throw Error(`${path}: yedeklenebilir normal Git dosyası değil; üzerine yazılmadı.`);
+  let content=(previous.encoding==='base64'&&typeof previous.content==='string')?previous.content:'';
+  if(!content.trim()){
+    log(`${path}: Contents API dosya içeriğini vermedi. Git Blobs API ile yedek alınıyor (${previous.size||'?'} bayt).`);
+    let blob;
+    try{blob=await api(`${base}/git/blobs/${encodeURIComponent(previous.sha)}`)}
+    catch(e){throw Error(`${path}: Git blob yedeklemesi başarısız. ${e.message}. Mevcut dosya korunmuştur.`)}
+    if(blob.sha!==previous.sha||blob.encoding!=='base64'||typeof blob.content!=='string'||!blob.content.trim()){
+      throw Error(`${path}: Git blob içeriği/kimliği doğrulanamadı. Mevcut dosya korunmuştur.`);
+    }
+    content=blob.content;
+  }
+  const clean=content.replace(/\s/g,'');
+  if(!/^[a-zA-Z0-9+/]*={0,2}$/.test(clean) || clean.length%4!==0)
+    throw Error(`${path}: yedek Base64 biçimi hatalı. Mevcut dosya korunmuştur.`);
+  const padding=clean.endsWith('==')?2:clean.endsWith('=')?1:0;
+  const bytes=(clean.length/4)*3-padding;
+  if(previous.size!==undefined && previous.size!==null && Number(previous.size)!==bytes)
+    throw Error(`${path}: yedek uzunluğu uyuşmadı (${bytes} / ${previous.size} bayt). Mevcut dosya korunmuştur.`);
+  log(`${path}: güvenli yedek hazır (${bytes} bayt).`);
+  return {...previous,content:clean,encoding:'base64'};
+}
+async function putFile(base,path,content,branch){let prev=await getFile(base,path,branch),payload={message:`APK builder: ${path}`,content,branch};if(prev)payload.sha=prev.sha;return await api(`${base}/contents/${encPath(path)}`,'PUT',payload)}
+async function restore(base,path,old,branch){let cur=await getFile(base,path,branch);if(!cur)return;
+ if(old){if(cur.sha===old.sha)return;if(!old.content)throw Error(`${path}: orijinal içerik API'den alınamadı`);await api(`${base}/contents/${encPath(path)}`,'PUT',{message:'APK builder: önceki dosyayı geri yükle',content:old.content.replace(/\s/g,''),sha:cur.sha,branch});}
+ else await api(`${base}/contents/${encPath(path)}`,'DELETE',{message:'APK builder: geçici dosyayı temizle',sha:cur.sha,branch});
+}
+function b64(bytes){let s='';for(let i=0;i<bytes.length;i+=8192)s+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(s)}
+function issueHelp(s){if(/HTTP 401|Bad credentials/i.test(s))return 'GitHub kimlik doğrulaması başarısız: PAT geçerliliğini kontrol et.';
+ if(/HTTP 403|Resource not accessible|rate limit/i.test(s))return 'GitHub erişim izni, Actions yetkisi veya API kota sınırı sorunu.';
+ if(/HTTP 404|Not Found/i.test(s))return 'Depo/iş akışı bulunamadı veya token erişemiyor.';
+ if(/HTTP 422/i.test(s))return 'GitHub isteği doğrulanamadı; workflow default branch üzerinde tanınmıyor olabilir.';
+ if(/Could not resolve|Could not find.*com\.android|Plugin.*not found/i.test(s))return 'Gradle bağımlılık veya eklenti indirme/çözümleme sorunu.';
+ if(/Unsupported class file major|Java.*incompatible|requires Java/i.test(s))return 'Java / Gradle / Android Gradle Plugin sürümü uyuşmazlığı.';
+ if(/SDK location|compileSdk|failed to find Build Tools/i.test(s))return 'Android SDK veya compileSdk yapılandırması sorunu.';
+ if(/Manifest merger failed/i.test(s))return 'AndroidManifest birleştirme hatası.';
+ if(/error:|Compilation failed|cannot find symbol|Unresolved reference/i.test(s))return 'Java/Kotlin kaynak kodu derleme hatası.';
+ if(/ZIP içinde|settings\.gradle/i.test(s))return 'ZIP proje yapısı eksik veya hatalı.';
+ return '';
+}
+function errorFromText(text,job,max=160){let lines=text.split(/\r?\n/),indexes=[];
+ const re=/(?:^|\s)(?:error:|fatal:|FAILURE:|Caused by:|Execution failed|What went wrong|Could not resolve|Could not find|BUILD FAILED|manifest merger failed|Exception in thread|AAPT2?\b|Cannot find symbol|Unresolved reference|No matching variant|failed to|Process .*finished with non-zero exit|Error code|HTTP [45]\d\d|::error)/i;
+ for(let i=0;i<lines.length;i++)if(re.test(lines[i]))indexes.push(i);
+ let out=[];for(let i of indexes.slice(0,max)){
+   let excerpt=lines.slice(Math.max(0,i-2),Math.min(lines.length,i+4)).join('\n');let hint=issueHelp(lines[i]);out.push(`[${job} / satır ${i+1}]${hint?' '+hint:''}\n${redact(excerpt)}`);
+ }
+ if(indexes.length>max)out.push(`[${job}] ${indexes.length-max} ek eşleşme var; tam günlükten incelenebilir.`);
+ return out;
+}
+async function jobLog(base,job){const path=`${base}/actions/jobs/${job.id}/logs`;try{
+  const r=await fetch('https://api.github.com'+path,{headers:{Authorization:'Bearer '+PAT,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},cache:'no-store'});
+  if(!r.ok)throw Error(`HTTP ${r.status} (${r.statusText})`);
+  const body=await r.text();if(!body||body.startsWith('<!doctype')||body.startsWith('<html'))throw Error('Sunucu okunabilir günlük yerine HTML döndürdü');
+  const text=redact(body.slice(0,8_000_000));report.raw_logs.push({job:job.name,source:'GitHub job logs',content:text});
+  if(body.length>8_000_000)report.log_access.push(`${job.name}: 8 MB üstü log tarayıcıda kısaltıldı. Tam günlük GitHub sayfasında.`);
+  report.errors.push(...errorFromText(text,job.name));report.log_access.push(`${job.name}: tam iş günlüğü tarayıcıdan alındı.`);
+ }catch(err){report.log_access.push(`${job.name}: tam günlük API'sine tarayıcıdan erişilemedi (${redact(err.message)}). GitHub'daki iş günlüğünü aç veya tanı artifact ZIP'ini indir.`);}
+}
+async function annotations(base,job){let all=[];
+ for(let page=1;page<=10;page++){
+   try{const arr=await api(`${base}/check-runs/${job.id}/annotations?per_page=100&page=${page}`);if(!Array.isArray(arr))break;all.push(...arr);if(arr.length<100)break;}
+   catch(err){if(page===1)report.log_access.push(`${job.name}: check-run hata açıklamalarına erişilemedi (${redact(err.message)}).`);break;}
+ }
+ for(const an of all){const item={job:job.name,level:an.annotation_level,path:an.path,start_line:an.start_line,end_line:an.end_line,title:an.title,message:redact(an.message||''),raw_details:redact(an.raw_details||'')};report.annotations.push(item);
+   if(['failure','warning'].includes(an.annotation_level))report.errors.push(`[GitHub annotation / ${job.name} / ${an.path||'-'}:${an.start_line||'-'}]\n${an.title||''}\n${item.message}\n${item.raw_details}`);
+ }
+}
+async function collect(base,owner,repo,run){
+ report.run_id=run.id;report.head_sha=run.head_sha||'';report.branch=run.head_branch||report.branch;report.conclusion=run.conclusion||run.status;linkRun(owner,repo,run.id);
+ log(`Çalışma: #${run.run_number} · ${run.status} / ${run.conclusion||'-'}`);
+ try{let page=1;while(page<=5){let data=await api(`${base}/actions/runs/${run.id}/jobs?per_page=100&page=${page}`);let jobs=data.jobs||[];
+  for(const j of jobs){let info={id:j.id,name:j.name,status:j.status,conclusion:j.conclusion,started_at:j.started_at,completed_at:j.completed_at,html_url:j.html_url,steps:(j.steps||[]).map(s=>({name:s.name,number:s.number,status:s.status,conclusion:s.conclusion,started_at:s.started_at,completed_at:s.completed_at}))};report.jobs.push(info);
+   for(const step of info.steps)if(step.conclusion==='failure')report.errors.push(`[BAŞARISIZ ADIM / ${info.name}] ${step.name} (adım ${step.number})`);
+   if(j.conclusion==='failure'||j.conclusion==='cancelled'){
+     await annotations(base,j);await jobLog(base,j);
+   }
+  }
+  if(jobs.length<100)break;page++;
+ }}catch(err){report.errors.push(`GitHub iş listesi alınamadı: ${redact(err.message)}`);}
+ try{const art=await api(`${base}/actions/runs/${run.id}/artifacts?per_page=100`);report.artifacts=(art.artifacts||[]).map(a=>({id:a.id,name:a.name,size_in_bytes:a.size_in_bytes,expired:a.expired}));
+   let diagnostic=report.artifacts.find(a=>a.name==='Android-Build-Diagnostics'&&!a.expired);
+   if(diagnostic)report.log_access.push(`Tanı artifact mevcut (ID ${diagnostic.id}); Actions sayfasından 'Android-Build-Diagnostics' dosyasını indirip tam build.log ve highlights.txt dosyalarını görebilirsin.`);
+ }catch(err){report.log_access.push('Artifact listesi alınamadı: '+redact(err.message));}
+ if(run.conclusion!=='success'&&report.errors.length===0)report.errors.push(`GitHub sonucu: ${run.conclusion||run.status}. API hata satırı sunmadı. Run: ${report.run_url}`);
+ showReport();
+}
+async function fetchRun(base,runId){return await api(`${base}/actions/runs/${runId}`)}
+async function lastRun(base,branch){const r=await api(`${base}/actions/runs?per_page=100&branch=${encodeURIComponent(branch)}`);const runs=r.workflow_runs||[];return runs.find(x=>x.path?.endsWith('/android-apk.yml'))||runs.find(x=>x.conclusion==='failure')||runs[0]||null;}
+async function dispatch(base,branch,requestId){
+ for(let attempt=1;attempt<=6;attempt++)try{await api(`${base}/actions/workflows/android-apk.yml/dispatches`,'POST',{ref:branch,inputs:{request_id:requestId}});return;}
+ catch(err){if(attempt>=6||![404,422,409].includes(err.status))throw err;log(`İş akışı henüz GitHub tarafından tanınmadı; tekrar kontrol (${attempt}/6).`);await sleep(attempt*3500);}
+}
+async function waitRun(base,branch,commitSha,requestId){for(let i=0;i<180;i++){
+ const data=await api(`${base}/actions/workflows/android-apk.yml/runs?per_page=100&branch=${encodeURIComponent(branch)}`);
+ const found=(data.workflow_runs||[]).find(x=>x.head_sha===commitSha && (x.display_title||'').includes(requestId));
+ if(found){if(!report.run_id){report.run_id=found.id;log(`Derleme bulundu: #${found.run_number}`);}if(found.status==='completed')return found;if(i%5===0)log(`GitHub derleme durumu: ${found.status}`);}
+ else if(i%5===0)log('Başlatılan derleme henüz listelenmedi.');await sleep(6000);
+ }return null;
+}
+async function downloadArtifact(base,id){let r;try{r=await fetch(`https://api.github.com${base}/actions/artifacts/${id}/zip`,{headers:{Authorization:'Bearer '+PAT,Accept:'application/vnd.github+json'},cache:'no-store'});}
+ catch(err){throw Error('GitHub artifact ZIP yönlendirmesi CORS/ağ nedeniyle engellendi: '+err.message)}
+ if(!r.ok)throw Error('APK indirme: HTTP '+r.status+' '+r.statusText);let blob=await r.blob();if(blob.size<100)throw Error('İndirilen ZIP boş veya beklenenden küçük.');return blob;
+}
+$('inspect').onclick=async()=>{if(working)return;clearReport('Mevcut GitHub Actions hatasını getir');setBusy(true);PAT=$('token').value.trim();let owner=$('owner').value.trim(),repo=$('repo').value.trim(),id=$('runid').value.trim();report.repository=owner+'/'+repo;
+ try{if(!owner||!repo||!PAT)throw Error('GitHub kullanıcı adı, depo ve PAT alanlarını doldur.');let base=baseFor(owner,repo),repoInfo=await api(base);report.branch=repoInfo.default_branch;let run=id?await fetchRun(base,Number(id)):await lastRun(base,repoInfo.default_branch);if(!run)throw Error('Bu depoda GitHub Actions çalışması bulunamadı.');await collect(base,owner,repo,run);
+  summary(`GitHub çalışma #${run.run_number}: ${run.conclusion||run.status} · ${report.errors.length} hata/bağlam kaydı`);}
+ catch(err){report.errors.push('Hata raporu alınamadı: '+redact(err.message));log('HATA: '+err.message);summary('Rapor alma işlemi başarısız. Ayrıntı aşağıda.');showReport();}
+ finally{PAT='';$('token').value='';setBusy(false);}
+};
+$('credentials').onsubmit=async e=>{
+ e.preventDefault();if(working)return;const owner=$('owner').value.trim(),repo=$('repo').value.trim(),file=$('file').files[0];PAT=$('token').value.trim();
+ if(!owner||!repo||!PAT||!file){alert('Kullanıcı, depo, PAT ve Android ZIP dosyasını belirt.');return;}
+ if(!/\.zip$/i.test(file.name)){alert('ZIP dosyası seç.');return;}
+ if(file.size>75*1024*1024){alert('ZIP dosyası 75 MB altında olmalı.');return;}
+ clearReport('Android APK oluştur');setBusy(true);
+ const base=baseFor(owner,repo);report.repository=owner+'/'+repo;let branch='',oldZip=null,oldWorkflow=null,changedZip=false,changedWorkflow=false,completed=false,apkBlob=null;
+ try{
+  const info=await api(base);branch=info.default_branch;report.branch=branch;if(!branch)throw Error('Depoda varsayılan dal bulunamadı; önce README ile ilk commit oluştur.');
+  const bytes=new Uint8Array(await file.arrayBuffer());if(bytes[0]!==80||bytes[1]!==75)throw Error('ZIP başlangıç imzası geçersiz.');
+  log('Depodaki önceki dosyalar yedekleniyor.');oldZip=await backupFile(base,'android-project.zip',branch);oldWorkflow=await backupFile(base,WORKFLOW_PATH,branch);
+  // Yedek alınamazsa backupFile hata verir ve hiçbir mevcut dosyanın üzerine yazılmaz.
+  const wf=b64(new TextEncoder().encode(workflow));
+  if(!oldWorkflow||oldWorkflow.content.replace(/\s/g,'')!==wf){log('Tanı özellikli Android iş akışı yükleniyor.');await putFile(base,WORKFLOW_PATH,wf,branch);changedWorkflow=true;}
+  log('Android proje ZIP dosyası yükleniyor.');let zipCommit=await putFile(base,'android-project.zip',b64(bytes),branch);changedZip=true;
+  report.head_sha=zipCommit.commit?.sha||'';
+  report.request_id=`build-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+  log(`Derleme isteniyor: ${report.request_id}`);await dispatch(base,branch,report.request_id);
+  summary('GitHub Actions derlemesi çalışıyor. Hata olursa tam tanı bilgileri alınacak.');
+  let run=await waitRun(base,branch,report.head_sha,report.request_id);
+  if(!run){report.errors.push('Derleme takip sınırı doldu. GitHub Actions çalışması hâlâ sürüyor olabilir. Geçici dosyalar korunmuştur. "Önceki/Son derleme hatasını getir" ile tekrar incele.');showReport();summary('Derleme tamamlanmadı; depo dosyaları korunuyor.');return;}
+  completed=true;await collect(base,owner,repo,run);
+  if(run.conclusion!=='success')throw Error(`GitHub derlemesi başarısız: ${run.conclusion}. ${report.run_url}`);
+  let art=report.artifacts.find(x=>x.name==='Android-APK'&&!x.expired);
+  if(!art)throw Error('Derleme başarılı görünüyor ama Android-APK artifact bulunamadı. GitHub Actions sayfasını kontrol et.');
+  log('APK artifact paketi indiriliyor.');
+  try{apkBlob=await downloadArtifact(base,art.id);log('APK paketi tarayıcıya alındı.');}
+  catch(err){report.log_access.push('Artifact otomatik indirme engellendi: '+redact(err.message));log('Otomatik indirme engellendi: '+err.message);}
+  summary(apkBlob?'✅ APK derlemesi başarılı. Depo önceki durumuna getiriliyor.':'✅ APK derlemesi başarılı; GitHub bağlantısından APK artifact dosyasını manuel indir.');
+ }catch(err){report.errors.push('İşlem hatası: '+redact(err.message));log('HATA: '+err.message);summary('❌ İşlem başarısız. Hata kodları ve erişilebilir ayrıntılar aşağıda.');}
+ finally{
+  if(branch&&completed){log('Tamamlanmış çalışma için depo geri yükleniyor.');let problems=[];
+   if(changedZip){try{await restore(base,'android-project.zip',oldZip,branch);report.cleanup.push('ZIP dosyası önceki durumuna alındı.')}catch(err){problems.push('ZIP: '+redact(err.message));}}
+   if(changedWorkflow){try{await restore(base,WORKFLOW_PATH,oldWorkflow,branch);report.cleanup.push('İş akışı önceki durumuna alındı.')}catch(err){problems.push('Workflow: '+redact(err.message));}}
+   if(problems.length){report.errors.push(...problems);report.cleanup.push(...problems);log('UYARI: Depo geri yüklemesi kısmen başarısız.');}
+   else log('Depo geri yüklemesi tamamlandı. GitHub Actions geçmişi korunur.');
+   if(apkBlob && problems.length===0){downloadUrl=URL.createObjectURL(apkBlob);$('download').href=downloadUrl;$('download').classList.remove('hidden');} else if(apkBlob){report.cleanup.push('Depo temizliği başarısız: uygulama içinden APK indirme kilitlendi; GitHub Actions artifact kaydı korunur.');}
+  }else if(changedZip||changedWorkflow){log('Derleme tamamlanmadan işlem kesildi. Geçici dosyalar otomatik silinmedi; Github Actions üzerinden kontrol et.');report.cleanup.push('Tamamlanmamış iş: geçici dosyalar korunmuştur.');}
+  showReport();PAT='';$('token').value='';setBusy(false);
+ }
+};
+</script>
+</main></body></html>
